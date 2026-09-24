@@ -1,0 +1,221 @@
+// use prisma-8
+
+enum ContentKind {
+  POST
+  CHANGELOG
+  PAGE
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum PageLayout {
+  STANDARD
+  CUSTOM
+  TIMELINE
+}
+
+// ==========================================
+// 1. 内容基底表（存放当前最新、线上生效的信息）
+// ==========================================
+model Content {
+  id              String          @id @default(uuid())
+  kind            ContentKind     @default(POST)
+  status          ContentStatus   @default(DRAFT)
+  
+  // 当前线上生效的最新的基础信息（单表查询极快）
+  title           String          
+  slug            String          @unique 
+  
+  // 指向当前生效的历史版本快照 ID
+  currentDetailId String?         @map("current_detail_id")
+
+  // 1:N 历史版本快照
+  details         ContentDetail[] 
+  
+  // 1:1 核心业务多态扩展
+  post        Post?  
+  changelog    Changelog?   
+  page         Page?  
+
+  createdAt       TimestamptzString           @default(now()) @map("created_at")
+  updatedAt       temporal.updatedAtString()  @map("updated_at")
+  deletedAt       TimestamptzString?  @map("deleted_at")
+
+  @@index([kind, status])
+  @@map("contents")
+}
+
+// ==========================================
+// 2. 内容详情与版本快照表（全量版本化、纯历史留痕）
+// ==========================================
+model ContentDetail {
+  id               String   @id @default(uuid())
+  contentId        String   @map("content_id")
+  content          Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  
+  version          Int      // 修订版本号，如 1, 2, 3 (每次保存递增)
+  
+  // 产生该特定历史版本时的元数据快照
+  title            String   
+  slug             String   
+  changelogVersion String?  @map("changelog_version") 
+  
+  bodyHtml         String   @map("body_html")
+  bodyJson         Json     @map("body_json")
+
+  createdAt        TimestamptzString @default(now()) @map("created_at")
+
+  @@unique([contentId, version])
+  @@map("content_details")
+}
+
+// ==========================================
+// 3. 业务功能多态扩展表（1:1 挂载）
+// ==========================================
+model Post {
+  id         String        @id @default(uuid())
+  contentId  String        @unique @map("content_id")
+  content    Content       @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  
+  format     String        @default("BLOG") // BLOG, LONG_FORM
+  
+  // 文章强制关联分类
+  categoryId String        @map("category_id")
+  category   Category      @relation(fields: [categoryId], references: [id])
+  tags       PostTag[]     
+  
+  cover      String?     
+  excerpt    String?
+
+  @@map("posts")
+}
+
+model Changelog {
+  id           String   @id @default(uuid())
+  contentId    String   @unique @map("content_id")
+  content      Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  
+  version      String   @unique // 当前最新生效的软件语义化版本，如 v1.2.0
+  isPrerelease Boolean  @default(false) @map("is_prerelease")
+
+  @@map("changelogs")
+}
+
+model Page {
+  id               String     @id @default(uuid())
+  contentId        String     @unique @map("content_id")
+  content          Content    @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  
+  layout           PageLayout @default(STANDARD)
+  componentsConfig Json       @map("components_config") // 存储UI组件控制参数
+
+  @@map("pages")
+}
+
+// ==========================================
+// 4. 辅助实体：分类、标签与多对多关联
+// ==========================================
+model Category {
+  id          String          @id @default(uuid())
+  name        String          @unique // 比如 "水果", "科技品牌"
+  slug        String          @unique
+  description String?
+  
+  // 分类层级关系
+  parentId String? @map("parent_id")
+  parent   Category? @relation("ParentCategory", fields: [parentId], references: [id])
+  children Category[] @relation("ParentCategory")
+
+  posts       Post[]
+  tags        Tag[]           // 分类内聚标签：一个分类拥有多个专属标签
+
+  createdAt TimestamptzString @default(now()) @map("created_at")
+  updatedAt temporal.updatedAtString() @map("updated_at")
+  deletedAt TimestamptzString? @map("deleted_at")
+
+  @@map("categories")
+}
+
+model Tag {
+  id         String    @id @default(uuid())
+  name       String    // 跨分类允许同名标签（如 "苹果" 既属于水果也属于科技品牌）
+  slug       String    // 格式可为 "categorySlug-tagSlug"
+  createdAt TimestamptzString @default(now()) @map("created_at")
+  updatedAt temporal.updatedAtString() @map("updated_at")
+  deletedAt TimestamptzString? @map("deleted_at")
+
+  categoryId String    @map("category_id")
+  category   Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  posts      PostTag[]
+  tagAlias   TagAlias[]
+
+  @@unique([categoryId, name]) // 联合唯一约束：同一分类下标签名唯一
+  @@map("tags")
+}
+
+model TagAlias {
+  id         String    @id @default(uuid())
+  name       String
+  createdAt TimestamptzString @default(now()) @map("created_at")
+  updatedAt temporal.updatedAtString() @map("updated_at")
+  deletedAt TimestamptzString? @map("deleted_at")
+
+  tagId      String @map("tag_id")
+  tag        Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@map("tag_aliases")
+}
+
+model PostTag {
+  postId String        @map("post_id")
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tagId  String        @map("tag_id")
+  tag    Tag           @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@map("post_tags")
+}
+
+model Media {
+  id        String   @id @default(uuid())
+  name      String
+  url       String   
+  key       String   @unique 
+  size      Int      
+  mimeType  String   @map("mime_type")
+  createdAt TimestamptzString @default(now()) @map("created_at")
+  updatedAt temporal.updatedAtString() @map("updated_at")
+
+  @@map("media")
+}
+
+// model AuditLog {
+//   id        String   @id @default(uuid())
+//   operator  String   
+//   action    String   
+//   ip        String
+//   targetId  String?   
+//   createdAt TimestamptzString @default(now())
+
+//   @@map("audit_logs")
+// }
+
+// ==========================================
+// 5. 辅助实体：用户表
+// ==========================================
+// model User {
+//   id        String   @id @default(uuid())
+//   email     String   @unique
+//   username  String?
+//   name      String?
+//   createdAt TimestamptzString @default(now()) @map("created_at")
+//   updatedAt temporal.updatedAtString() @map("updated_at")
+//   deletedAt TimestamptzString? @map("deleted_at")
+
+//   @@map("users")
+// }
