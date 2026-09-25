@@ -1,6 +1,6 @@
 # 模板
 
-约定见 [README.md](./README.md)。完整集见 `api/api.http.test.md`。
+约定见 [README.md](./README.md)。完整集见 [unit/http.test.md](./unit/http.test.md)。
 
 ## 空白
 
@@ -10,7 +10,7 @@
 |----|------|
 | 目标 | |
 | 前置 | 无 |
-| 层级 | Parse / Service / HTTP / UI |
+| 层级 | 单元 / 组件 / 端到端 |
 | 方法 | 等价类 / 边界值 / 场景法 / 错误猜测 / 状态迁移 / 决策表 |
 | 步骤 | 1. |
 | 期望 | |
@@ -25,7 +25,7 @@
 |----|------|
 | 目标 | 合法 body 创建成功 |
 | 前置 | 不存在 `name=Bob` |
-| 层级 | HTTP |
+| 层级 | 单元 |
 | 方法 | 等价类、边界值 |
 | 步骤 | 1. `POST /api/v1` Body: `{"name":"Bob","age":18}` |
 | 期望 | HTTP 200；`data.id` 非空；`data.name` 为 `Bob`；`data.age` 为 `18` |
@@ -38,7 +38,7 @@
 |----|------|
 | 目标 | `age < 18` 校验失败 |
 | 前置 | 无 |
-| 层级 | Parse |
+| 层级 | 单元 |
 | 方法 | 边界值 |
 | 步骤 | 1. `POST /api/v1` Body: `{"name":"Bob","age":17}` |
 | 期望 | HTTP 422；`error.code` 为 `Validation Error` |

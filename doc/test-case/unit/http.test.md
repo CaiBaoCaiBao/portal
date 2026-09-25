@@ -126,7 +126,7 @@
 |----|------|
 | 目标 | 无 query 时默认分页 |
 | 前置 | 种子 `demo` 在 |
-| 层级 | HTTP |
+| 层级 | 单元 |
 | 方法 | 等价类 |
 | 步骤 | 1. `GET /api/v1` |
 | 期望 | HTTP 200；`data.items` 含 `demo` / `Alice` / `20`；`page` 为 `1`；`pageSize` 为 `10`；`total` ≥ 1 |
@@ -139,7 +139,7 @@
 |----|------|
 | 目标 | `name` 忽略大小写包含匹配 |
 | 前置 | 种子 `Alice` 在 |
-| 层级 | Service |
+| 层级 | 单元 |
 | 方法 | 等价类 |
 | 步骤 | 1. `GET /api/v1?name=ali` |
 | 期望 | HTTP 200；`items` 每项 `name` 含 `ali`（忽略大小写）；含 `Alice` |
@@ -152,7 +152,7 @@
 |----|------|
 | 目标 | 无匹配时空列表 |
 | 前置 | 无 `name` 含 `zzz` |
-| 层级 | Service |
+| 层级 | 单元 |
 | 方法 | 等价类 |
 | 步骤 | 1. `GET /api/v1?name=zzz` |
 | 期望 | HTTP 200；`items` 为 `[]`；`total` 为 `0` |
@@ -165,7 +165,7 @@
 |----|------|
 | 目标 | 出现的 `name` 至少 1 字符 |
 | 前置 | 无 |
-| 层级 | Parse |
+| 层级 | 单元 |
 | 方法 | 边界值 |
 | 步骤 | 1. `GET /api/v1?name=` |
 | 期望 | HTTP 422；`error.code` 为 `Validation Error` |
@@ -178,7 +178,7 @@
 |----|------|
 | 目标 | `minAge=0` 合法，种子不被滤 |
 | 前置 | 种子 `age=20` |
-| 层级 | Parse |
+| 层级 | 单元 |
 | 方法 | 边界值 |
 | 步骤 | 1. `GET /api/v1?minAge=0` |
 | 期望 | HTTP 200；`items` 含 `demo` |
@@ -191,7 +191,7 @@
 |----|------|
 | 目标 | `minAge < 0` 校验失败 |
 | 前置 | 无 |
-| 层级 | Parse |
+| 层级 | 单元 |
 | 方法 | 边界值 |
 | 步骤 | 1. `GET /api/v1?minAge=-1` |
 | 期望 | HTTP 422；`error.code` 为 `Validation Error` |
@@ -204,7 +204,7 @@
 |----|------|
 | 目标 | 非数字 `minAge` 校验失败 |
 | 前置 | 无 |
-| 层级 | Parse |
+| 层级 | 单元 |
 | 方法 | 错误猜测 |
 | 步骤 | 1. `GET /api/v1?minAge=abc` |
 | 期望 | HTTP 422；`error.code` 为 `Validation Error` |
@@ -217,7 +217,7 @@
 |----|------|
 | 目标 | 只留 `age >= minAge` |
 | 前置 | 种子 `age=20` |
-| 层级 | Service |
+| 层级 | 单元 |
 | 方法 | 等价类 |
 | 步骤 | 1. `GET /api/v1?minAge=21` |
 | 期望 | HTTP 200；`items` 不含 `demo` |
@@ -230,7 +230,7 @@
 |----|------|
 | 目标 | 两过滤取交集 |
 | 前置 | 种子 `Alice/20` |
-| 层级 | Service |
+| 层级 | 单元 |
 | 方法 | 决策表 |
 | 步骤 | 1. `GET /api/v1?name=Alice&minAge=20` 2. `GET /api/v1?name=Alice&minAge=21` |
 | 期望 | 两步 HTTP 200；第一步含 `demo`；第二步不含 |
@@ -243,7 +243,7 @@
 |----|------|
 | 目标 | `pageSize=50` 合法 |
 | 前置 | 无 |
-| 层级 | Parse |
+| 层级 | 单元 |
 | 方法 | 边界值 |
 | 步骤 | 1. `GET /api/v1?pageSize=50` |
 | 期望 | HTTP 200；`data.pageSize` 为 `50` |
@@ -256,7 +256,7 @@
 |----|------|
 | 目标 | `pageSize=51` 校验失败 |
 | 前置 | 无 |
-| 层级 | Parse |
+| 层级 | 单元 |
 | 方法 | 边界值 |
 | 步骤 | 1. `GET /api/v1?pageSize=51` |
 | 期望 | HTTP 422；`error.code` 为 `Validation Error` |
@@ -269,7 +269,7 @@
 |----|------|
 | 目标 | `page` 为正、`pageSize` ≥ 1 |
 | 前置 | 无 |
-| 层级 | Parse |
+| 层级 | 单元 |
 | 方法 | 边界值 |
 | 步骤 | 1. `GET /api/v1?page=0` 2. `GET /api/v1?pageSize=0` |
 | 期望 | 两步 HTTP 422；`error.code` 为 `Validation Error` |
@@ -282,7 +282,7 @@
 |----|------|
 | 目标 | 按 `page` / `pageSize` 切片 |
 | 前置 | 至少 1 条 |
-| 层级 | Service |
+| 层级 | 单元 |
 | 方法 | 等价类 |
 | 步骤 | 1. `GET /api/v1?page=1&pageSize=1` |
 | 期望 | HTTP 200；`items.length` ≤ 1；`page` 为 `1`；`pageSize` 为 `1`；`total` ≥ `items.length` |
@@ -295,7 +295,7 @@
 |----|------|
 | 目标 | 合法 body 创建成功 |
 | 前置 | 不存在 `name=Bob` |
-| 层级 | HTTP |
+| 层级 | 单元 |
 | 方法 | 等价类、边界值 |
 | 步骤 | 1. `POST /api/v1` Body: `{"name":"Bob","age":18}` |
 | 期望 | HTTP 200；`data.id` 非空；`name` 为 `Bob`；`age` 为 `18` |
@@ -308,7 +308,7 @@
 |----|------|
 | 目标 | `age < 18` 校验失败 |
 | 前置 | 无 |
-| 层级 | Parse |
+| 层级 | 单元 |
 | 方法 | 边界值 |
 | 步骤 | 1. `POST /api/v1` Body: `{"name":"Bob","age":17}` |
 | 期望 | HTTP 422；`error.code` 为 `Validation Error` |
@@ -321,7 +321,7 @@
 |----|------|
 | 目标 | `age=150` 可创建 |
 | 前置 | 不存在所用 `name` |
-| 层级 | Parse |
+| 层级 | 单元 |
 | 方法 | 边界值 |
 | 步骤 | 1. `POST /api/v1` Body: `{"name":"MaxAge","age":150}` |
 | 期望 | HTTP 200；`data.age` 为 `150` |
@@ -334,7 +334,7 @@
 |----|------|
 | 目标 | `age=151` 校验失败 |
 | 前置 | 无 |
-| 层级 | Parse |
+| 层级 | 单元 |
 | 方法 | 边界值 |
 | 步骤 | 1. `POST /api/v1` Body: `{"name":"TooOld","age":151}` |
 | 期望 | HTTP 422；`error.code` 为 `Validation Error` |
@@ -347,7 +347,7 @@
 |----|------|
 | 目标 | `name`、`age` 必填 |
 | 前置 | 无 |
-| 层级 | Parse |
+| 层级 | 单元 |
 | 方法 | 等价类 |
 | 步骤 | 1. `POST /api/v1` Body: `{"age":18}` 2. `POST /api/v1` Body: `{"name":"NoAge"}` |
 | 期望 | 两步 HTTP 422；`error.code` 为 `Validation Error` |
@@ -360,7 +360,7 @@
 |----|------|
 | 目标 | trim 后空 `name` 非法 |
 | 前置 | 无 |
-| 层级 | Parse |
+| 层级 | 单元 |
 | 方法 | 边界值 |
 | 步骤 | 1. `POST /api/v1` Body: `{"name":" ","age":18}` |
 | 期望 | HTTP 422；`error.code` 为 `Validation Error` |
@@ -373,7 +373,7 @@
 |----|------|
 | 目标 | `name` 长度 51 非法 |
 | 前置 | 无 |
-| 层级 | Parse |
+| 层级 | 单元 |
 | 方法 | 边界值 |
 | 步骤 | 1. `POST /api/v1` Body: `{"name":"<51 个字符 a>","age":18}` |
 | 期望 | HTTP 422；`error.code` 为 `Validation Error` |
@@ -386,7 +386,7 @@
 |----|------|
 | 目标 | `name` 长度 50 可创建 |
 | 前置 | 该 50 字 `name` 未占用 |
-| 层级 | Parse |
+| 层级 | 单元 |
 | 方法 | 边界值 |
 | 步骤 | 1. `POST /api/v1` Body: `{"name":"<50 个字符 a>","age":18}` |
 | 期望 | HTTP 200；`data.name` 长度 50 |
@@ -399,7 +399,7 @@
 |----|------|
 | 目标 | 两端空白 trim 后入库 |
 | 前置 | 不存在 `name=TrimMe` |
-| 层级 | Parse |
+| 层级 | 单元 |
 | 方法 | 等价类 |
 | 步骤 | 1. `POST /api/v1` Body: `{"name":" TrimMe ","age":18}` |
 | 期望 | HTTP 200；`data.name` 为 `TrimMe` |
@@ -412,7 +412,7 @@
 |----|------|
 | 目标 | 同名冲突 |
 | 前置 | 种子 `Alice` 在 |
-| 层级 | Service |
+| 层级 | 单元 |
 | 方法 | 错误猜测 |
 | 步骤 | 1. `POST /api/v1` Body: `{"name":"Alice","age":18}` |
 | 期望 | HTTP 409；`error.code` 为 `Conflict` |
@@ -425,7 +425,7 @@
 |----|------|
 | 目标 | 非法 JSON 为 400 |
 | 前置 | 无 |
-| 层级 | HTTP |
+| 层级 | 单元 |
 | 方法 | 错误猜测 |
 | 步骤 | 1. `POST /api/v1` `Content-Type: application/json` Body: `{name:` |
 | 期望 | HTTP 400；`error.code` 为 `Bad Request` |
@@ -442,7 +442,7 @@
 |----|------|
 | 目标 | 存在的 id 返回该资源 |
 | 前置 | 种子 `demo` 未被改 |
-| 层级 | HTTP |
+| 层级 | 单元 |
 | 方法 | 等价类 |
 | 步骤 | 1. `GET /api/v1/demo` |
 | 期望 | HTTP 200；`data` 为 `{ id: "demo", name: "Alice", age: 20 }` |
@@ -455,7 +455,7 @@
 |----|------|
 | 目标 | 未知 id 为 404 |
 | 前置 | 不存在 `id=missing` |
-| 层级 | Service |
+| 层级 | 单元 |
 | 方法 | 状态迁移 |
 | 步骤 | 1. `GET /api/v1/missing` |
 | 期望 | HTTP 404；`error.code` 为 `Not Found` |
@@ -468,7 +468,7 @@
 |----|------|
 | 目标 | `id` 长度 > 64 校验失败 |
 | 前置 | 无 |
-| 层级 | Parse |
+| 层级 | 单元 |
 | 方法 | 边界值 |
 | 步骤 | 1. `GET /api/v1/<65 个字符 a>` |
 | 期望 | HTTP 422；`error.code` 为 `Validation Error` |
@@ -481,7 +481,7 @@
 |----|------|
 | 目标 | 完整替换，id 不变 |
 | 前置 | `demo` 在；本条会改种子 `age`，依赖 `Alice/20` 的列表用例须先跑或先重启 |
-| 层级 | HTTP |
+| 层级 | 单元 |
 | 方法 | 等价类 |
 | 步骤 | 1. `PUT /api/v1/demo` Body: `{"name":"Alice","age":21}` |
 | 期望 | HTTP 200；`id` 为 `demo`；`name` 为 `Alice`；`age` 为 `21` |
@@ -494,7 +494,7 @@
 |----|------|
 | 目标 | 不存在 id 替换失败 |
 | 前置 | 不存在 `id=missing` |
-| 层级 | Service |
+| 层级 | 单元 |
 | 方法 | 状态迁移 |
 | 步骤 | 1. `PUT /api/v1/missing` Body: `{"name":"Ghost","age":18}` |
 | 期望 | HTTP 404；`error.code` 为 `Not Found` |
@@ -507,7 +507,7 @@
 |----|------|
 | 目标 | 替换 body 与创建相同，越界 422 |
 | 前置 | 无 |
-| 层级 | Parse |
+| 层级 | 单元 |
 | 方法 | 边界值 |
 | 步骤 | 1. `PUT /api/v1/demo` Body: `{"name":"Alice","age":17}` |
 | 期望 | HTTP 422；`error.code` 为 `Validation Error` |
@@ -520,7 +520,7 @@
 |----|------|
 | 目标 | 非法 JSON 为 400 |
 | 前置 | 无 |
-| 层级 | HTTP |
+| 层级 | 单元 |
 | 方法 | 错误猜测 |
 | 步骤 | 1. `PUT /api/v1/demo` Body: `{` |
 | 期望 | HTTP 400；`error.code` 为 `Bad Request` |
@@ -533,7 +533,7 @@
 |----|------|
 | 目标 | 改成其他项已占用 `name` 则冲突 |
 | 前置 | `demo/Alice`；另有 `Bob`（可先 POST） |
-| 层级 | Service |
+| 层级 | 单元 |
 | 方法 | 错误猜测 |
 | 步骤 | 1. `PUT /api/v1/demo` Body: `{"name":"Bob","age":20}` |
 | 期望 | HTTP 409；`error.code` 为 `Conflict` |
@@ -546,7 +546,7 @@
 |----|------|
 | 目标 | 提交自身已有 `name` 不冲突 |
 | 前置 | `demo/Alice` |
-| 层级 | Service |
+| 层级 | 单元 |
 | 方法 | 等价类 |
 | 步骤 | 1. `PUT /api/v1/demo` Body: `{"name":"Alice","age":22}` |
 | 期望 | HTTP 200；`name` 为 `Alice`；`age` 为 `22` |
@@ -559,7 +559,7 @@
 |----|------|
 | 目标 | 只改一字段，其余不变 |
 | 前置 | 先 POST `PatchMe/18`，勿改种子 |
-| 层级 | HTTP |
+| 层级 | 单元 |
 | 方法 | 等价类 |
 | 步骤 | 1. `POST /api/v1` Body: `{"name":"PatchMe","age":18}` 记下 `id` 2. `PATCH /api/v1/{id}` Body: `{"age":30}` |
 | 期望 | 两步 HTTP 200；`name` 仍为 `PatchMe`；`age` 为 `30` |
@@ -572,7 +572,7 @@
 |----|------|
 | 目标 | `{}` 校验失败 |
 | 前置 | 无 |
-| 层级 | Parse |
+| 层级 | 单元 |
 | 方法 | 错误猜测 |
 | 步骤 | 1. `PATCH /api/v1/demo` Body: `{}` |
 | 期望 | HTTP 422；`error.code` 为 `Validation Error` |
@@ -585,7 +585,7 @@
 |----|------|
 | 目标 | 合法 body、未知 id 为 404 |
 | 前置 | 不存在 `id=missing` |
-| 层级 | Service |
+| 层级 | 单元 |
 | 方法 | 状态迁移 |
 | 步骤 | 1. `PATCH /api/v1/missing` Body: `{"age":30}` |
 | 期望 | HTTP 404；`error.code` 为 `Not Found` |
@@ -598,7 +598,7 @@
 |----|------|
 | 目标 | 非法 JSON 为 400 |
 | 前置 | 无 |
-| 层级 | HTTP |
+| 层级 | 单元 |
 | 方法 | 错误猜测 |
 | 步骤 | 1. `PATCH /api/v1/demo` Body: `{` |
 | 期望 | HTTP 400；`error.code` 为 `Bad Request` |
@@ -611,7 +611,7 @@
 |----|------|
 | 目标 | `name` 改成其他项已占用值则冲突 |
 | 前置 | `demo/Alice`；另有 `Bob` |
-| 层级 | Service |
+| 层级 | 单元 |
 | 方法 | 错误猜测 |
 | 步骤 | 1. `PATCH /api/v1/demo` Body: `{"name":"Bob"}` |
 | 期望 | HTTP 409；`error.code` 为 `Conflict` |
@@ -624,7 +624,7 @@
 |----|------|
 | 目标 | 删除已有项并返回被删资源 |
 | 前置 | 先 POST `DelMe/18`，勿删种子 |
-| 层级 | HTTP |
+| 层级 | 单元 |
 | 方法 | 状态迁移 |
 | 步骤 | 1. `POST /api/v1` Body: `{"name":"DelMe","age":18}` 记下 `id` 2. `DELETE /api/v1/{id}` |
 | 期望 | HTTP 200；`data.id` 与创建一致；`name` 为 `DelMe` |
@@ -637,7 +637,7 @@
 |----|------|
 | 目标 | 未知 id 删除失败 |
 | 前置 | 不存在 `id=missing` |
-| 层级 | Service |
+| 层级 | 单元 |
 | 方法 | 状态迁移 |
 | 步骤 | 1. `DELETE /api/v1/missing` |
 | 期望 | HTTP 404；`error.code` 为 `Not Found` |
@@ -650,7 +650,7 @@
 |----|------|
 | 目标 | `id` 超长 422 |
 | 前置 | 无 |
-| 层级 | Parse |
+| 层级 | 单元 |
 | 方法 | 边界值 |
 | 步骤 | 1. `DELETE /api/v1/<65 个字符 a>` |
 | 期望 | HTTP 422；`error.code` 为 `Validation Error` |
@@ -667,7 +667,7 @@
 |----|------|
 | 目标 | 创建 → 列表可见 → 改后读一致 → 删后再读 404 |
 | 前置 | 不存在 `name=Loop` |
-| 层级 | HTTP |
+| 层级 | 单元 |
 | 方法 | 场景法、状态迁移 |
 | 步骤 | 1. `POST /api/v1` Body: `{"name":"Loop","age":18}` 记下 `id` 2. `GET /api/v1?name=Loop` 3. `PATCH /api/v1/{id}` Body: `{"age":19}` 4. `GET /api/v1/{id}` 5. `DELETE /api/v1/{id}` 6. `GET /api/v1/{id}` |
 | 期望 | 1–5 HTTP 200；第 2 步 `items` 含该 `id`；第 4 步 `name=Loop`、`age=19`；第 6 步 HTTP 404、`error.code` 为 `Not Found` |
