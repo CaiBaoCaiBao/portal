@@ -1003,13 +1003,6 @@
                   "kind": "scalar"
                 }
               },
-              "slug": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
               "updatedAt": {
                 "nullable": false,
                 "type": {
@@ -1082,9 +1075,6 @@
                 },
                 "name": {
                   "column": "name"
-                },
-                "slug": {
-                  "column": "slug"
                 },
                 "updatedAt": {
                   "column": "updated_at"
@@ -1962,11 +1952,6 @@
                   "nativeType": "text",
                   "nullable": false
                 },
-                "slug": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
                 "updated_at": {
                   "codecId": "pg/timestamptz-string@1",
                   "nativeType": "timestamptz",
@@ -2048,7 +2033,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "915e8abf4eb3ff046308f98e70cc9fa0ff80a6bd4bfcefa1a50faccdcdbc769f"
+    "storageHash": "29c33659777943491d0306db76d4b38e5a8021d525775a1986bbdc990fd10f7b"
   },
   "execution": {
     "executionHash": "e9bca97fe0b08b59f21cabebbb62144af5056967317adf63d90d1e6326227b95",

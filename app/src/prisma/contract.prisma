@@ -143,7 +143,6 @@ model Category {
 model Tag {
   id         String    @id @default(uuid())
   name       String    // 跨分类允许同名标签（如 "苹果" 既属于水果也属于科技品牌）
-  slug       String    // 格式可为 "categorySlug-tagSlug"
   createdAt TimestamptzString @default(now()) @map("created_at")
   updatedAt temporal.updatedAtString() @map("updated_at")
   deletedAt TimestamptzString? @map("deleted_at")
