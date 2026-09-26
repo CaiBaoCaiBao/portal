@@ -4,8 +4,8 @@
 
 | 模块 | 职责 | 资源 |
 |------|------|------|
-| 分类 Category | 树形分类、默认「未分类」、删分类时迁帖 | [category.md](./detail-design/category.md) |
-| 标签 Tag / TagAlias | 分类内聚标签；跨分类可同名；别名检索 | 待写 |
+| 分类 Category | 树形分类；`isSystem` 系统分类「未分类」；`isActive` 启停；删分类时迁帖 | [category.md](./detail-design/category.md) |
+| 标签 Tag / TagAlias | 分类内聚标签；跨分类可同名；`isActive` 启停；别名检索 | 待写 |
 | 内容基底 Content / ContentDetail | 当前态 + 版本快照、并发保存、回滚 | 待写 |
 | 文章 Post | 博客 / 长文；强制分类；仅文章挂标签 | 待写 |
 | 更新日志 Changelog | 语义化版本；与标签解耦 | 待写 |
@@ -56,14 +56,16 @@ flowchart TB
 |----|----|------|
 | Tag | Category | 标签必属一分类；删分类级联删其标签 |
 | TagAlias | Tag | 别名挂在标签上 |
-| Post | Category | 文章强制分类；删分类先迁到默认未分类 |
+| Post | Category | 文章强制分类；删分类先迁到 `isSystem` 的「未分类」 |
 | Post | Tag | `PostTag`；标签仅限当前分类 |
 | Post / Changelog / Page | Content | 1:1；`kind` 与扩展表一致 |
 | ContentDetail | Content | 1:N 快照；保存递增 `version`，更新 `currentDetailId` |
-| 前台路由 | Content / Category / Tag | 当前 slug 渲染；历史 slug 走 `ContentDetail` 做 301 |
+| 前台路由 | Content / Category / Tag | 内容与分类用当前 slug 渲染；历史内容 slug 走 `ContentDetail` 做 301。标签无 slug |
 | Media | 正文 / 封面 | URL 引用；GC 按差集回收 |
 
 Changelog、Page 不挂标签。User / AuditLog 未入模，不画。实现顺序：Category → Tag → Content/Detail → Post → Changelog / Page → Media → 前台路由。
+
+`Category.isSystem = true` 的种子行是系统分类「未分类」：不可删除，不可改名称、slug、父级和启用状态，也不可作为父分类。`Category.isActive` 与 `Tag.isActive` 默认 `true`；为 `false` 时不进入前台导航和文章选择器，已挂内容保留。这两列不是软删。分类删除仍是迁帖之后的物理删除。`deletedAt` 列保留，读取时排除非空。标签契约没有 slug。
 
 ## 2. 规范约定
 
