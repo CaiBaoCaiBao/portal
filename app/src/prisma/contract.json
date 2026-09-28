@@ -132,6 +132,20 @@
                   "kind": "scalar"
                 }
               },
+              "isActive": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
+              "isSystem": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
               "name": {
                 "nullable": false,
                 "type": {
@@ -237,6 +251,12 @@
                 },
                 "id": {
                   "column": "id"
+                },
+                "isActive": {
+                  "column": "is_active"
+                },
+                "isSystem": {
+                  "column": "is_system"
                 },
                 "name": {
                   "column": "name"
@@ -996,6 +1016,13 @@
                   "kind": "scalar"
                 }
               },
+              "isActive": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
               "name": {
                 "nullable": false,
                 "type": {
@@ -1072,6 +1099,9 @@
                 },
                 "id": {
                   "column": "id"
+                },
+                "isActive": {
+                  "column": "is_active"
                 },
                 "name": {
                   "column": "name"
@@ -1205,6 +1235,24 @@
                 "id": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
+                  "nullable": false
+                },
+                "is_active": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": true
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
+                "is_system": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": false
+                  },
+                  "nativeType": "bool",
                   "nullable": false
                 },
                 "name": {
@@ -1947,6 +1995,15 @@
                   "nativeType": "text",
                   "nullable": false
                 },
+                "is_active": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": true
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
                 "name": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
@@ -2033,7 +2090,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "29c33659777943491d0306db76d4b38e5a8021d525775a1986bbdc990fd10f7b"
+    "storageHash": "f1bad9532754f1f680fa1bbb92a21d82267c4eeac61ea3b41cdf4a5b73de45ce"
   },
   "execution": {
     "executionHash": "e9bca97fe0b08b59f21cabebbb62144af5056967317adf63d90d1e6326227b95",

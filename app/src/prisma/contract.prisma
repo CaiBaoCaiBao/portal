@@ -124,6 +124,8 @@ model Category {
   name        String          @unique // 比如 "水果", "科技品牌"
   slug        String          @unique
   description String?
+  isActive Boolean @default(true) @map("is_active")
+  isSystem Boolean @default(false) @map("is_system")
   
   // 分类层级关系
   parentId String? @map("parent_id")
@@ -143,6 +145,7 @@ model Category {
 model Tag {
   id         String    @id @default(uuid())
   name       String    // 跨分类允许同名标签（如 "苹果" 既属于水果也属于科技品牌）
+  isActive Boolean @default(true) @map("is_active")
   createdAt TimestamptzString @default(now()) @map("created_at")
   updatedAt temporal.updatedAtString() @map("updated_at")
   deletedAt TimestamptzString? @map("deleted_at")
