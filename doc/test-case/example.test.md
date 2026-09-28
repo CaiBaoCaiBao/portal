@@ -1,6 +1,6 @@
 # 模板
 
-约定见 [README.md](./README.md)。完整集见 [unit/http.test.md](./unit/http.test.md)。
+约定见 [README.md](./README.md)。`unit/` 是接口单元测试。完整集见 [unit/http.test.md](./unit/http.test.md)。
 
 ## 空白
 

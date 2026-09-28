@@ -209,7 +209,7 @@ sequenceDiagram
 
 ## 测试
 
-用例正文落在 `doc/test-case/unit/category.test.md`（实现时按 [测试约定](../test-case/README.md) 展开）。下表是本模块的行为契约。断言 HTTP 状态与 `error.code`。不覆盖标签 CRUD、文章编辑、前台 301。
+用例正文落在 [category.test.md](../test-case/unit/category.test.md)（接口单元测试，约定见 [测试文档](../test-case/README.md)）。下表是契约索引。断言 HTTP 状态与 `error.code`。不覆盖标签 CRUD、文章编辑、前台 301。
 
 | 编号 | 优先级 | 契约 |
 |------|--------|------|
