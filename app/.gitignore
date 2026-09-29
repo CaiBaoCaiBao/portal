@@ -42,3 +42,6 @@ next-env.d.ts
 
 # test
 /__test__/
+node_modules/
+dist/
+.env

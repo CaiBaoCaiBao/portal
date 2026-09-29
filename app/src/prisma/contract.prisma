@@ -1,0 +1,37 @@
+// use prisma-8
+
+// -------------------------- ENUM -------------------------------
+
+// 路由类型枚举
+enum RouterType {
+  set // 集合
+  group // 分组
+  directory // 目录
+  page // 页面
+}
+
+// -------------------------- MODEL --------------------------------
+
+// =========================
+// T1-系统路由表
+// =========================
+model SystemRouter {
+  id             String               @id @default(uuid())
+  name           String
+  path           String?
+  type           RouterType           @default(page)
+  icon           String?
+  parentId       String?              @map("parent_id")
+  isActive       Boolean              @default(true) @map("is_active")
+  permissionIds  String[]             @default([]) @map("permission_ids")
+  createdAt      TimestamptzString    @default(now()) @map("created_at")
+  updatedAt      temporal.updatedAtString()
+
+  parent         SystemRouter?        @relation("SystemRouterTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children       SystemRouter[]       @relation("SystemRouterTree")
+
+  @@unique([path, parentId])
+  @@index([path])
+  @@index([parentId])
+  @@map("system_router")
+}
