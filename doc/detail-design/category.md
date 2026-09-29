@@ -2,7 +2,7 @@
 
 树形分类、系统分类「未分类」、启用开关、删除分类时把文章迁走。依据 [系统详细设计](../detail-system-design.md)、[概要设计](../system-preliminary-design.md) 与 `app/src/prisma/contract.prisma`。
 
-分类是树：`parentId` 指向父节点，根节点为 `null`。系统分类看列 `isSystem`，启用看列 `isActive`。
+分类是树：`parentId` 指向父节点，根节点为 `null`。根为第 1 层，最多三层。系统分类看列 `isSystem`，启用看列 `isActive`。
 
 ## 职责与边界
 
@@ -33,7 +33,7 @@
 | `description` | 可空 | 空串入库为 `null` |
 | `isActive` | 布尔，默认 `true` | 前台导航与文章选择器是否露出。不是软删 |
 | `isSystem` | 布尔，默认 `false` | 系统种子行。管理接口不能把它写成 `true` |
-| `parentId` | 可空，自关联 | `null` 为根；删除父节点时数据库 Restrict |
+| `parentId` | 可空，自关联 | `null` 为根（第 1 层）；最多三层，不落层数列；删除父节点时数据库 Restrict |
 | `createdAt` / `updatedAt` | 非空 | |
 | `deletedAt` | 可空 | 与内容表同构。本模块删除走物理删除，正常数据保持 `null`。读取一律 `deletedAt IS null` |
 
@@ -133,6 +133,7 @@
 | 仍有子分类 | `ConflictError` | `请先删除子分类` |
 | 父级是自身或子孙 | `BadRequestError` | `不能把分类移到自身或其子分类下` |
 | 父级是系统分类 | `BadRequestError` | `不能在系统分类下创建子分类` |
+| 挂上后本节点或子孙超过第 3 层 | `BadRequestError` | `分类最多三层` |
 | 系统分类缺失或不止一行 | `InternalError` | `系统分类不存在` |
 | 形状不符 | `ValidationError` | Zod `fieldErrors` |
 | 并发下唯一约束 | `ConflictError` | 全局 Prisma 映射 |
@@ -145,10 +146,11 @@ Service 先按 `name`、`slug` 分别查询，以便 message 能区分两者。�
 2. **slug 是当前 URL 段。** 允许修改。本模块不保留旧 slug；改 slug 或删除后，旧 `/categories/{old}` 由前台按未命中处理。写成功后对旧 slug 与新 slug 调用 `revalidatePath`。
 3. **系统分类是迁移终点，不是分支。** `isSystem = true` 的种子行即「未分类」。不可删除；`name`、`slug`、`parentId`、`isActive` 不可变成别的值；不可作为 `parentId`；简介可改。接口不接收 `isSystem`，新建行恒为 `false`。表单重复提交与当前相同的 name、slug、`parentId: null` 或 `isActive: true` 视为未改动，不报错。
 4. **父级必须是现存分类。** 不能是自身，不能是自己的子孙（沿 `parentId` 向上走到根），不能是系统分类。父级可以是已停用分类。改父级不移动文章，也不移动标签。
-5. **有子分类则拒绝删除。** 先删叶子。子分类上的文章留在子分类，不在删父级时被迁走。
-6. **删除会迁帖并丢掉该分类的标签。** 该 `categoryId` 下的全部文章改挂到系统分类。文章行、正文、状态保留。该分类的标签及 `PostTag` 随级联删除，迁走的文章不再带这些标签。
-7. **停用不是删除。** `isActive = false` 的分类仍留在管理端树里，其下文章仍挂着。前台树去掉该节点及其子孙，已停用父级下的启用子分类也不露出。停用父级不改写子级的 `isActive`。系统分类不能停用。
-8. **Changelog、Page 无分类外键。** 删除分类不碰它们。标签的 `isActive` 由标签模块解释。
+5. **最多三层。** 根（`parentId` 为 `null`）为第 1 层，其子为第 2 层，再下为第 3 层。层数不落列：从节点沿未软删的 `parentId` 向上走到根，步数 + 1 即层数。已停用节点仍占层数。创建时新节点层数 = 父级层数 + 1（无父级为 1）。改父级时本节点新层数同样计算，再加子树高度（到最深未软删子孙的边数，叶子为 0）；本节点或其任一子孙因此超过第 3 层则整次拒绝，不部分移动。`parentId: null` 挂回根不会超限。第 3 层仍可改名称、slug、简介和启用，只是不能再挂子分类。
+6. **有子分类则拒绝删除。** 先删叶子。子分类上的文章留在子分类，不在删父级时被迁走。
+7. **删除会迁帖并丢掉该分类的标签。** 该 `categoryId` 下的全部文章改挂到系统分类。文章行、正文、状态保留。该分类的标签及 `PostTag` 随级联删除，迁走的文章不再带这些标签。
+8. **停用不是删除。** `isActive = false` 的分类仍留在管理端树里，其下文章仍挂着。前台树去掉该节点及其子孙，已停用父级下的启用子分类也不露出。停用父级不改写子级的 `isActive`。系统分类不能停用。
+9. **Changelog、Page 无分类外键。** 删除分类不碰它们。标签的 `isActive` 由标签模块解释。
 
 ## 分层落点
 
@@ -171,7 +173,7 @@ DAO 方法：`findById`、`findBySlug`、`findSystem`、`listAll`、`countChildr
 管理端：
 
 - 树表展示名称、slug、启用状态、文章数、标签数。系统分类不提供删除和停用。
-- 新建 / 编辑：名称、slug、简介、父分类、启用。父级选项排除自身、子孙和系统分类。
+- 新建 / 编辑：名称、slug、简介、父分类、启用。父级选项排除自身、子孙、系统分类，以及选中后会使本节点或其子孙超过第 3 层的分类。新建时没有子孙，第 3 层不可选为父级。
 - 删除确认写明：文章将迁到系统分类「未分类」，该分类下的标签会删除。成功后展示 `migratedPostCount`，并失效 `["categories"]`。
 
 ## 关键事务
@@ -205,7 +207,7 @@ sequenceDiagram
 
 `FOR UPDATE` 与文章插入所需的外键锁冲突，因此锁持有期间新文章挂不上这条分类；提交后分类已不在，插入会失败而不会留下孤儿。
 
-修改父级时同样锁住当前行，再确认新父级存在、不是系统分类，且从新父级沿父链向上不会遇到当前 id。停用分类时只更新 `isActive`，不迁帖。
+修改父级时同样锁住当前行，再确认新父级存在、不是系统分类，且从新父级沿父链向上不会遇到当前 id。通过后再算层数：新父级为 `null` 时本节点为第 1 层，否则为父级层数 + 1；加上该节点子树高度，超过 3 则 `分类最多三层`。创建走同一层数判定，此时子树高度为 0。停用分类时只更新 `isActive`，不迁帖。
 
 ## 测试
 
@@ -221,6 +223,8 @@ sequenceDiagram
 | CAT-POST-006 | P0 | 父分类不存在 → 404 `Not Found` |
 | CAT-POST-007 | P0 | `parentId` 为系统分类 → 400 `Bad Request` |
 | CAT-POST-008 | P0 | `isActive: false` 创建成功；管理端列表仍返回该节点，`isSystem` 为 false |
+| CAT-POST-014 | P0 | 父级为第 2 层时创建成功，新节点为第 3 层 |
+| CAT-POST-015 | P0 | 父级已是第 3 层 → 400 `Bad Request`，message 为 `分类最多三层` |
 | CAT-GET-001 | P0 | 列表只在根上返回森林；同级按 `createdAt`、`name` 排序；含系统分类且 `isSystem` 为 true，并含已停用分类 |
 | CAT-GETID-001 | P0 | 详情含 `createdAt`、`updatedAt`、`isActive`、`isSystem`、`postCount`、`tagCount`，不含 `children` |
 | CAT-GETID-002 | P0 | 未知 id → 404 |
@@ -229,6 +233,8 @@ sequenceDiagram
 | CAT-PATCH-003 | P0 | 修改系统分类的 name、slug 或 `isActive` → 409；只改简介 → 200 |
 | CAT-PATCH-004 | P0 | 空 body → 422 |
 | CAT-PATCH-005 | P0 | 普通分类 `isActive` 改为 false → 200，文章仍挂在该分类 |
+| CAT-PATCH-012 | P0 | 改父级后本节点或子孙超过第 3 层 → 400，message 为 `分类最多三层`，树不变 |
+| CAT-PATCH-013 | P0 | 把第 3 层叶子改挂到另一个第 2 层父级 → 200，仍为第 3 层 |
 | CAT-DELETE-001 | P0 | 分类下有文章和标签：文章 `categoryId` 变为系统分类，`migratedPostCount` 正确，该分类标签与 `PostTag` 消失，文章行仍在 |
 | CAT-DELETE-002 | P0 | 删除系统分类 → 409，行仍在 |
 | CAT-DELETE-003 | P0 | 仍有子分类 → 409，文章不被迁走 |
