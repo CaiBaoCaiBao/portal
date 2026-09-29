@@ -4,6 +4,7 @@ import {
 } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminHeader } from "@/components/admin/admin-header";
+
 export default function Layout({ children }: LayoutProps<"/admin">) {
     return (
         <div className="[--header-height:calc(--spacing(14))]">

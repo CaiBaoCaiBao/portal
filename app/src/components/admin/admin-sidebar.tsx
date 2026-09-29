@@ -1,4 +1,5 @@
 "use client";
+import { useEffect } from "react";
 import {
     Sidebar,
     SidebarContent,
@@ -9,7 +10,8 @@ import {
     SidebarMenuAction,
     SidebarMenuSub,
     SidebarMenuSubButton,
-    SidebarMenuSubItem
+    SidebarMenuSubItem,
+    useSidebar,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import {
@@ -28,7 +30,13 @@ import { usePathname } from "next/navigation";
 
 export function AdminSidebar() {
     const pathname = usePathname();
+    const { setOpenMobile } = useSidebar();
     const isActive = (href: string) => pathname === href;
+
+    useEffect(() => {
+        setOpenMobile(false);
+    }, [pathname, setOpenMobile]);
+
     return (
         <Sidebar
             className="top-(--header-height) h-[calc(100svh-var(--header-height))]!"
