@@ -1,3 +1,4 @@
+"use client";
 import {
     Sidebar,
     SidebarContent,
@@ -15,6 +16,7 @@ import {
     LayoutDashboard,
     Package,
     FlaskConical,
+    Tag,
     ChevronRight,
 } from "lucide-react";
 import {
@@ -22,8 +24,11 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+import { usePathname } from "next/navigation";
 
 export function AdminSidebar() {
+    const pathname = usePathname();
+    const isActive = (href: string) => pathname === href;
     return (
         <Sidebar
             className="top-(--header-height) h-[calc(100svh-var(--header-height))]!"
@@ -36,29 +41,35 @@ export function AdminSidebar() {
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 render={<Link href="/admin" />}
+                                isActive={isActive("/admin")}
                             >
                                 <LayoutDashboard />
                                 Dashboard
                             </SidebarMenuButton>
                         </SidebarMenuItem>
-                    </SidebarMenu>
-
-                    <SidebarMenu>
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 render={<Link href="/admin/category" />}
+                                isActive={isActive("/admin/category")}
                             >
                                 <Package />
                                 Category
                             </SidebarMenuButton>
                         </SidebarMenuItem>
-                    </SidebarMenu>
-
-                    {/* 功能性实验 */}
-                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                render={<Link href="/admin/tag" />}
+                                isActive={isActive("/admin/tag")}
+                            >
+                                <Tag />
+                                Tag
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        {/* 功能性实验 */}
                         <Collapsible className="group/collapsible">
                             <SidebarMenuItem>
-                                <SidebarMenuButton>
+                                <SidebarMenuButton
+                                >
                                     <FlaskConical />
                                     Lab
                                 </SidebarMenuButton>
