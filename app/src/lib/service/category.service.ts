@@ -5,10 +5,11 @@ import { CategoryDao, type CategoryTx } from "@/lib/dao/category.dao";
 import type { CreateCategoryDTO, UpdateCategoryDTO } from "@/lib/schema/category.schema";
 import {
     buildCategoryTree,
+    exceedsMaxCategoryLevel,
     parentCreatesCycle,
     pruneInactiveCategories,
     systemFieldsChanged,
-} from "@/lib/service/category-tree";
+} from "@/lib/utils/category-tree";
 import { db } from "@/prisma/db";
 import type {
     CategoryDAO,
@@ -186,11 +187,13 @@ export class CategoryService {
         const parent = await CategoryDao.findById(tx, parentId);
         if (!parent) throw new NotFoundError("父分类不存在");
         if (parent.isSystem) throw new BadRequestError("不能在系统分类下创建子分类");
-        if (!selfId) return;
         const rows = await CategoryDao.listAll(tx);
         const parentById = new Map(rows.map((row) => [row.id, row.parentId]));
-        if (parentCreatesCycle(parentById, selfId, parentId)) {
+        if (selfId && parentCreatesCycle(parentById, selfId, parentId)) {
             throw new BadRequestError("不能把分类移到自身或其子分类下");
+        }
+        if (exceedsMaxCategoryLevel(parentById, parentId, selfId)) {
+            throw new BadRequestError("分类最多三层");
         }
     }
 }

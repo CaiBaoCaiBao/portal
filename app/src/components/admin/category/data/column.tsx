@@ -14,6 +14,7 @@ const categoryColumnHelper = columnHelper<typeof treeTableFeatures, CategoryItem
 interface Props {
     openEdit: (item: CategoryItemVO) => void;
     openDetails: (item: CategoryItemVO) => void;
+    openDelete: (item: CategoryItemVO) => void;
 }
 
 function ColumnHeader({ children, className }: { children: string; className?: string }) {
@@ -24,7 +25,7 @@ function ColumnHeader({ children, className }: { children: string; className?: s
     );
 }
 
-export function columns({ openEdit, openDetails }: Props) {
+export function columns({ openEdit, openDetails, openDelete }: Props) {
     return categoryColumnHelper.columns([
         categoryColumnHelper.accessor("name", {
             header: () => <ColumnHeader>Name</ColumnHeader>,
@@ -105,6 +106,7 @@ export function columns({ openEdit, openDetails }: Props) {
                         item={row.original}
                         openEdit={openEdit}
                         openDetails={openDetails}
+                        openDelete={openDelete}
                     />
                 </div>
             )

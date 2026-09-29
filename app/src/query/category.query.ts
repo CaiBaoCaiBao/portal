@@ -3,7 +3,7 @@ import {
     mutationOptions,
 } from "@tanstack/react-query";
 import { Http } from "@/lib/utils";
-import { CategoryDetailVO, CategoryListVO } from "@/types/category.type";
+import { CategoryDetailVO, CategoryListVO, DeleteCategoryVO } from "@/types/category.type";
 import type {
     CreateCategoryBody,
     UpdateCategoryBody,
@@ -38,5 +38,14 @@ export class CategoryQuery {
                 return Http.post<CategoryDetailVO>("/api/admin/v1/categories", body);
             },
         });
+    }
+    static delete() {
+        return mutationOptions({
+            mutationFn: (id: string) => {
+                return Http.delete<DeleteCategoryVO>(
+                    `/api/admin/v1/categories/${id}`,
+                );
+            },
+        })
     }
 }

@@ -19,9 +19,10 @@ interface Props {
     item: CategoryItemVO;
     openEdit: (item: CategoryItemVO) => void;
     openDetails: (item: CategoryItemVO) => void;
+    openDelete: (item: CategoryItemVO) => void;
 }
 
-export function CategoryDataActions({ item, openEdit, openDetails }: Props) {
+export function CategoryDataActions({ item, openEdit, openDetails, openDelete }: Props) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger
@@ -40,13 +41,15 @@ export function CategoryDataActions({ item, openEdit, openDetails }: Props) {
                     <Info />
                     Details
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => openEdit(item)}
-                >
-                    <Trash2 />
-                    Delete
-                </DropdownMenuItem>
+                {!item.isSystem && (
+                    <DropdownMenuItem
+                        variant="destructive"
+                        onClick={() => openDelete(item)}
+                    >
+                        <Trash2 />
+                        Delete
+                    </DropdownMenuItem>
+                )}
             </DropdownMenuContent>
         </DropdownMenu>
     )

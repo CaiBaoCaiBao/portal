@@ -41,6 +41,60 @@ export function pruneInactiveCategories(nodes: CategoryItemBO[]): CategoryItemBO
         }));
 }
 
+export const MAX_CATEGORY_LEVEL = 3;
+
+export function categoryLevel(
+    parentById: ReadonlyMap<string, string | null>,
+    id: string,
+): number {
+    let level = 1;
+    let cursor: string | null = parentById.get(id) ?? null;
+    const seen = new Set<string>();
+    while (cursor) {
+        if (seen.has(cursor)) break;
+        seen.add(cursor);
+        level += 1;
+        cursor = parentById.get(cursor) ?? null;
+    }
+    return level;
+}
+
+export function categorySubtreeHeight(
+    parentById: ReadonlyMap<string, string | null>,
+    id: string,
+): number {
+    const childrenByParent = new Map<string, string[]>();
+    for (const [nodeId, parentId] of parentById) {
+        if (!parentId) continue;
+        const children = childrenByParent.get(parentId);
+        if (children) children.push(nodeId);
+        else childrenByParent.set(parentId, [nodeId]);
+    }
+
+    const heightOf = (nodeId: string, seen: Set<string>): number => {
+        if (seen.has(nodeId)) return 0;
+        seen.add(nodeId);
+        const children = childrenByParent.get(nodeId) ?? [];
+        let max = 0;
+        for (const childId of children) {
+            max = Math.max(max, 1 + heightOf(childId, seen));
+        }
+        return max;
+    };
+
+    return heightOf(id, new Set());
+}
+
+export function exceedsMaxCategoryLevel(
+    parentById: ReadonlyMap<string, string | null>,
+    parentId: string,
+    selfId?: string,
+): boolean {
+    const parentLevel = categoryLevel(parentById, parentId);
+    const height = selfId ? categorySubtreeHeight(parentById, selfId) : 0;
+    return parentLevel + 1 + height > MAX_CATEGORY_LEVEL;
+}
+
 export function parentCreatesCycle(
     parentById: ReadonlyMap<string, string | null>,
     selfId: string,

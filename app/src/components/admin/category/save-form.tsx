@@ -31,6 +31,7 @@ interface Props {
     form: SaveFormType;
     listTree: CategoryListVO;
     excludeIds: readonly string[];
+    subtreeHeight: number;
 }
 
 function shouldShowFieldError(field: {
@@ -48,8 +49,8 @@ function shouldShowFieldError(field: {
         || field.state.meta.errorMap.onSubmit != null;
 }
 
-export function SaveForm({ formId, form, listTree, excludeIds }: Props) {
-    const parentOptions = parentCategoryOptions(listTree, new Set(excludeIds));
+export function SaveForm({ formId, form, listTree, excludeIds, subtreeHeight }: Props) {
+    const parentOptions = parentCategoryOptions(listTree, new Set(excludeIds), subtreeHeight);
 
     return (
         <form id={formId}

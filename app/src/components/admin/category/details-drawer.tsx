@@ -31,6 +31,7 @@ interface Props {
     onOpenChangeComplete?: (open: boolean) => void;
     item: CategoryItemVO | null;
     openEdit: (item: CategoryItemVO) => void;
+    openDelete: (item: CategoryItemVO) => void;
 }
 
 function StatusBadge({ active }: { active: boolean }) {
@@ -51,10 +52,12 @@ function DetailChild({
     item,
     openEdit,
     openDetails,
+    openDelete,
 }: {
     item: CategoryItemVO;
     openEdit: (item: CategoryItemVO) => void;
     openDetails: (item: CategoryItemVO) => void;
+    openDelete: (item: CategoryItemVO) => void;
 }) {
     const childCount = item.children.length;
 
@@ -71,6 +74,7 @@ function DetailChild({
                     item={item}
                     openEdit={openEdit}
                     openDetails={openDetails}
+                    openDelete={openDelete}
                 />
             </ItemActions>
             <ItemFooter>
@@ -96,6 +100,7 @@ export function CategoryDetailsDrawer({
     onOpenChangeComplete,
     item,
     openEdit,
+    openDelete,
 }: Props) {
     const isMobile = useIsMobile();
     const [nestedItem, setNestedItem] = useState<CategoryItemVO | null>(null);
@@ -156,6 +161,7 @@ export function CategoryDetailsDrawer({
                                         item={child}
                                         openEdit={openEdit}
                                         openDetails={openChildDetails}
+                                        openDelete={openDelete}
                                     />
                                 ))}
                             </ItemGroup>
@@ -171,14 +177,16 @@ export function CategoryDetailsDrawer({
                         <Pencil />
                         Edit
                     </Button>
-                    <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => onOpenChange(false)}
-                    >
-                        <Trash2 />
-                        Delete
-                    </Button>
+                    {!item.isSystem && (
+                        <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => openDelete(item)}
+                        >
+                            <Trash2 />
+                            Delete
+                        </Button>
+                    )}
                 </DrawerFooter>
                 {nestedItem && (
                     <CategoryDetailsDrawer
@@ -189,6 +197,7 @@ export function CategoryDetailsDrawer({
                         }}
                         item={nestedItem}
                         openEdit={openEdit}
+                        openDelete={openDelete}
                     />
                 )}
             </DrawerContent>

@@ -25,12 +25,14 @@ interface ItemProps {
     item: CategoryItemVO;
     openEdit: (item: CategoryItemVO) => void;
     openDetails: (item: CategoryItemVO) => void;
+    openDelete: (item: CategoryItemVO) => void;
 }
 
 interface ListProps {
     data: CategoryItemVO[];
     openEdit: (item: CategoryItemVO) => void;
     openDetails: (item: CategoryItemVO) => void;
+    openDelete: (item: CategoryItemVO) => void;
 }
 
 function StatusBadge({ active }: { active: boolean }) {
@@ -47,7 +49,7 @@ function StatusBadge({ active }: { active: boolean }) {
     );
 }
 
-export function DataItem({ item, openEdit,openDetails }: ItemProps) {
+export function DataItem({ item, openEdit,openDetails, openDelete }: ItemProps) {
     const childCount = item.children.length;
     const hasChildren = childCount > 0;
     const description = item.description?.trim();
@@ -79,7 +81,12 @@ export function DataItem({ item, openEdit,openDetails }: ItemProps) {
                     </ItemTitle>
                 </ItemContent>
                 <ItemActions>
-                    <CategoryDataActions item={item} openEdit={openEdit} openDetails={openDetails} />
+                    <CategoryDataActions
+                        item={item}
+                        openEdit={openEdit}
+                        openDetails={openDetails}
+                        openDelete={openDelete}
+                    />
                 </ItemActions>
                 <ItemFooter>
                     <code className="min-w-0 truncate rounded-md bg-muted px-1.5 py-0.5 font-mono text-xs text-muted-foreground">
@@ -99,7 +106,12 @@ export function DataItem({ item, openEdit,openDetails }: ItemProps) {
                 <CollapsibleContent>
                     <div className="mt-2 ml-4 flex flex-col gap-2 border-l pl-3">
                         {item.children.map((child) => (
-                            <DataItem key={child.id} item={child} openEdit={openEdit} openDetails={openDetails} />
+                            <DataItem
+                                key={child.id}
+                                item={child}
+                                openEdit={openEdit}
+                                openDetails={openDetails}
+                                openDelete={openDelete} />
                         ))}
                     </div>
                 </CollapsibleContent>
@@ -108,7 +120,7 @@ export function DataItem({ item, openEdit,openDetails }: ItemProps) {
     );
 }
 
-export function CategoryDataItems({ data, openEdit, openDetails }: ListProps) {
+export function CategoryDataItems({ data, openEdit, openDetails, openDelete }: ListProps) {
     if (data.length === 0) {
         return (
             <div className="rounded-md border px-4 py-8 text-center text-sm text-muted-foreground md:hidden">
@@ -120,7 +132,13 @@ export function CategoryDataItems({ data, openEdit, openDetails }: ListProps) {
     return (
         <ItemGroup className="md:hidden">
             {data.map((item) => (
-                <DataItem key={item.id} item={item} openEdit={openEdit} openDetails={openDetails} />
+                <DataItem
+                    key={item.id}
+                    item={item}
+                    openEdit={openEdit}
+                    openDetails={openDetails}
+                    openDelete={openDelete}
+                />
             ))}
         </ItemGroup>
     );

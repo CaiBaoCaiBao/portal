@@ -1,3 +1,4 @@
+import { MAX_CATEGORY_LEVEL } from "@/lib/utils/category-tree";
 import { CategoryItemVO, CategoryListVO } from "@/types/category.type";
 
 export type ParentCategoryOption = {
@@ -14,9 +15,16 @@ export function collectSubtreeIds(node: CategoryItemVO): string[] {
     return ids;
 }
 
+export function categoryNodeSubtreeHeight(node: CategoryItemVO | null | undefined): number {
+    const children = node?.children ?? [];
+    if (children.length === 0) return 0;
+    return 1 + Math.max(...children.map((child) => categoryNodeSubtreeHeight(child)));
+}
+
 export function parentCategoryOptions(
     nodes: CategoryListVO,
     excludeIds: ReadonlySet<string>,
+    subtreeHeight = 0,
 ): ParentCategoryOption[] {
     const options: ParentCategoryOption[] = [];
 
@@ -29,7 +37,10 @@ export function parentCategoryOptions(
                 walk(children, depth);
                 continue;
             }
-            options.push({ id: node.id, name: node.name, depth });
+            const parentLevel = depth + 1;
+            if (parentLevel + 1 + subtreeHeight <= MAX_CATEGORY_LEVEL) {
+                options.push({ id: node.id, name: node.name, depth });
+            }
             walk(children, depth + 1);
         }
     };

@@ -31,6 +31,7 @@ interface Props {
     form: SaveFormType;
     listTree: CategoryListVO;
     excludeIds: readonly string[];
+    subtreeHeight: number;
     isPending: boolean;
     errorMessage: string | null;
 }
@@ -41,6 +42,7 @@ export function SaveDialogDrawer({
     form,
     listTree,
     excludeIds,
+    subtreeHeight,
     isPending,
     errorMessage,
 }: Props) {
@@ -65,6 +67,7 @@ export function SaveDialogDrawer({
             form={form}
             listTree={listTree}
             excludeIds={excludeIds}
+            subtreeHeight={subtreeHeight}
         />
     )
     if (!isMobile) {

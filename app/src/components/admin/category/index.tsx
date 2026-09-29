@@ -9,11 +9,12 @@ import { Button } from "@/components/ui/button";
 import { usePage } from "@/hooks/category/use-page";
 import { SaveDialogDrawer } from "./save-dialog-drawer";
 import { useSaveForm } from "@/hooks/category/use-save-form";
-import { collectSubtreeIds } from "./parent-options";
+import { categoryNodeSubtreeHeight, collectSubtreeIds } from "./parent-options";
 import { CategoryQuery } from "@/query/category.query";
 import { CategoryDataTable } from "./data/data-table";
 import { CategoryDataItems } from "./data/data-item";
 import { CategoryDetailsDrawer } from "./details-drawer";
+import { DeleteDrawer } from "./delete-drawer";
 
 interface Props {
     listTree: CategoryListVO;
@@ -36,7 +37,11 @@ export function CategoryPage({ listTree }: Props) {
         resetValues(item);
         actions.openSave(item);
     };
-    const column = columns({ openEdit, openDetails: actions.openDetails });
+    const column = columns({
+        openEdit,
+        openDetails: actions.openDetails,
+        openDelete: actions.openDelete
+    });
     return (
         <div className="space-y-4">
             <div>
@@ -52,6 +57,7 @@ export function CategoryPage({ listTree }: Props) {
                 data={categories}
                 openEdit={openEdit}
                 openDetails={actions.openDetails}
+                openDelete={actions.openDelete}
             />
             <SaveDialogDrawer
                 open={state.operate === "save"}
@@ -63,6 +69,7 @@ export function CategoryPage({ listTree }: Props) {
                 form={form}
                 listTree={categories}
                 excludeIds={state.selectedRow ? collectSubtreeIds(state.selectedRow) : []}
+                subtreeHeight={categoryNodeSubtreeHeight(state.selectedRow)}
                 isPending={isPending}
                 errorMessage={errorMessage}
             />
@@ -74,6 +81,23 @@ export function CategoryPage({ listTree }: Props) {
                 }}
                 item={state.detailsItem}
                 openEdit={openEdit}
+                openDelete={actions.openDelete}
+            />
+            <DeleteDrawer
+                open={state.operate === "delete"}
+                onOpenChange={(open) => {
+                    if (open) return;
+                    actions.resetDelete();
+                    actions.close();
+                }}
+                item={state.selectedRow}
+                isPending={actions.isDeleting}
+                errorMessage={actions.deleteError}
+                result={actions.deleteResult}
+                onConfirm={() => {
+                    if (!state.selectedRow) return;
+                    actions.delete(state.selectedRow.id);
+                }}
             />
         </div>
     );
