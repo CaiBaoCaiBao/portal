@@ -2,7 +2,7 @@
 export default function Page() {
   return (
     <div>
-      Admin Page
+      Page
     </div>
   );
 }
