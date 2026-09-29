@@ -2,16 +2,16 @@
 
 ## 1. 模块总览与依赖图
 
-| 模块 | 职责 | 资源 |
-|------|------|------|
-| 分类 Category | 树形分类；`isSystem` 系统分类「未分类」；`isActive` 启停；删分类时迁帖 | [category.md](./detail-design/category.md) |
-| 标签 Tag / TagAlias | 分类内聚标签；跨分类可同名；`isActive` 启停；别名检索 | 待写 |
-| 内容基底 Content / ContentDetail | 当前态 + 版本快照、并发保存、回滚 | 待写 |
-| 文章 Post | 博客 / 长文；强制分类；仅文章挂标签 | 待写 |
-| 更新日志 Changelog | 语义化版本；与标签解耦 | 待写 |
-| 独立页面 Page | 布局与组件配置；高频静态化 | 待写 |
-| 媒体 Media | 七牛直传、落库、孤儿回收 | 待写 |
-| 前台路由 | ISR / 按需重签；历史 slug 的 301 | 待写 |
+| 模块 | 职责 | 资源 | 进度 |
+|------|------|------|------|
+| 分类 Category | 树形分类；`isSystem` 系统分类「未分类」；`isActive` 启停；删分类时迁帖 | [category.md](./detail-design/category.md) | ![已完成](https://img.shields.io/badge/completed-green) |
+| 标签 Tag / TagAlias | 分类内聚标签；跨分类可同名；`isActive` 启停；别名检索 | [tag.md](./detail-design/tag.md) | ![设计中](https://img.shields.io/badge/designing-yellow) |
+| 内容基底 Content / ContentDetail | 当前态 + 版本快照、并发保存、回滚 | 待写 | - |
+| 文章 Post | 博客 / 长文；强制分类；仅文章挂标签 | 待写 | - |
+| 更新日志 Changelog | 语义化版本；与标签解耦 | 待写 | - |
+| 独立页面 Page | 布局与组件配置；高频静态化 | 待写 | - |
+| 媒体 Media | 七牛直传、落库、孤儿回收 | 待写 | - |
+| 前台路由 | ISR / 按需重签；历史 slug 的 301 | 待写 | - |
 
 箭头表示「依赖」。实线：外键或必须先有的领域依赖。虚线：媒体被正文 / 封面引用，无强制 FK。
 
