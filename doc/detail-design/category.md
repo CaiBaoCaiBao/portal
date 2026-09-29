@@ -160,7 +160,8 @@ Service 先按 `name`、`slug` 分别查询，以便 message 能区分两者。�
 | `app/src/lib/schema/category.schema.ts` | 三个 schema 与 DTO |
 | `app/src/types/category.type.ts` | VO、BO |
 | `app/src/lib/dao/category.dao.ts` | 行读写、计数、迁帖；方法接受事务客户端 |
-| `app/src/lib/service/category.service.ts` | 规则、组树、事务、BO |
+| `app/src/lib/utils/category-tree.ts` | 组树、剪停用节点、层数/环检测等纯函数 |
+| `app/src/lib/service/category.service.ts` | 规则编排、事务、BO |
 | `app/src/app/api/v1/categories/route.ts` | `GET` 列表、`POST` |
 | `app/src/app/api/v1/categories/[id]/route.ts` | `GET` / `PATCH` / `DELETE` |
 | `app/src/app/(admin)/admin/category/page.tsx` | 已挂页面 |
