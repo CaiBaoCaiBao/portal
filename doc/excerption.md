@@ -18,7 +18,7 @@
 { ok: false, error: { code, message, details?, errorId? } }
 ```
 
-`apiHandler` 在进入业务前按声明的 Zod schema 校验 `query` / `body`；只接管失败分支。成功响应由具体 handler 自己返回。
+`apiHandler` 在进入业务前按声明的 Zod schema 校验 `query` / `body`；成功时把 handler 返回的 `data` 包成 `ApiResult` 再 `Response.json`。失败分支统一 catch。
 
 ## 2. 错误码与模块
 
@@ -44,9 +44,10 @@ flowchart TB
   req["Request"] --> parse{"声明了 query / body schema?"}
   parse -->|是| zodParse["Zod parse"]
   zodParse -->|失败| toApp["toAppError"]
-  zodParse -->|通过| biz["handler 业务"]
+  zodParse -->|通过| biz["handler 返回 data"]
   parse -->|否| biz
   biz -->|抛出| toApp
+  biz -->|成功| success["toSuccessResult + Response.json"]
   toApp --> already{"已是 AppError?"}
   already -->|是| app["沿用"]
   already -->|否| prisma["mapPrismaError"]
@@ -57,6 +58,7 @@ flowchart TB
   app --> log["服务端日志：message、cause、stack、details"]
   log --> wire["toErrorResult"]
   wire --> json["Response JSON + statusCode"]
+  success --> done["200 JSON"]
 ```
 
 入口：`query` / `body` 有 schema 时必须校验通过才进入 `handler`。非法 JSON 直接 `BadRequestError`。校验失败经 `mapZodError` 返回字段列表。searchParams 单值是 `string`，同名多值是 `string[]`；数字等用 `z.coerce`。
@@ -66,7 +68,7 @@ export const GET = apiHandler({
   module: "content",
   query: listQuerySchema,
   handler: async ({ query }) => {
-    return Response.json({ ok: true, data, timestamp });
+    return data; // 只返回业务 data
   },
 });
 
@@ -75,7 +77,7 @@ export const POST = apiHandler({
   body: createBodySchema,
   handler: async ({ body }) => {
     // 业务失败直接 throw NotFoundError / ConflictError / ...
-    return Response.json({ ok: true, data, timestamp });
+    return data;
   },
 });
 ```
