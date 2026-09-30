@@ -8,7 +8,7 @@
 
 ## 功能模块
 
-- 系统路由模块
+- 系统路由模块 ![设计中](https://img.shields.io/badge/design-yellow)
 - 分类与标签管理模块
 - 内容管理模块
    - 更新日志管理
