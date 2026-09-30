@@ -18,7 +18,7 @@
 { ok: false, error: { code, message, details?, errorId? } }
 ```
 
-`apiHandler` 只接管失败分支。成功响应由具体 handler 自己返回。
+`apiHandler` 在进入业务前按声明的 Zod schema 校验 `query` / `body`；只接管失败分支。成功响应由具体 handler 自己返回。
 
 ## 2. 错误码与模块
 
@@ -41,7 +41,12 @@
 
 ```mermaid
 flowchart TB
-  throw["handler 抛出异常"] --> toApp["toAppError"]
+  req["Request"] --> parse{"声明了 query / body schema?"}
+  parse -->|是| zodParse["Zod parse"]
+  zodParse -->|失败| toApp["toAppError"]
+  zodParse -->|通过| biz["handler 业务"]
+  parse -->|否| biz
+  biz -->|抛出| toApp
   toApp --> already{"已是 AppError?"}
   already -->|是| app["沿用"]
   already -->|否| prisma["mapPrismaError"]
@@ -54,12 +59,24 @@ flowchart TB
   wire --> json["Response JSON + statusCode"]
 ```
 
-入口：
+入口：`query` / `body` 有 schema 时必须校验通过才进入 `handler`。非法 JSON 直接 `BadRequestError`。校验失败经 `mapZodError` 返回字段列表。searchParams 单值是 `string`，同名多值是 `string[]`；数字等用 `z.coerce`。
 
 ```ts
-export const POST = apiHandler("content", async (req) => {
-  // 业务失败直接 throw NotFoundError / ConflictError / ...
-  return Response.json({ ok: true, data, timestamp });
+export const GET = apiHandler({
+  module: "content",
+  query: listQuerySchema,
+  handler: async ({ query }) => {
+    return Response.json({ ok: true, data, timestamp });
+  },
+});
+
+export const POST = apiHandler({
+  module: "content",
+  body: createBodySchema,
+  handler: async ({ body }) => {
+    // 业务失败直接 throw NotFoundError / ConflictError / ...
+    return Response.json({ ok: true, data, timestamp });
+  },
 });
 ```
 
@@ -80,9 +97,11 @@ export const POST = apiHandler("content", async (req) => {
 
 ## 5. Zod 4
 
-`instanceof ZodError` 命中后映射为 `BadRequestError("校验失败")`。字段列表来自 `error.issues`，并展开 `invalid_union`、`invalid_key`、`invalid_element` 的嵌套 issue。
+`apiHandler` 对声明的 `query` / `body` 调用 `schema.parse`。失败抛出 `ZodError`，经 `mapZodError` 映射为 `BadRequestError("校验失败")`。字段列表来自 `error.issues`，并展开 `invalid_union`、`invalid_key`、`invalid_element` 的嵌套 issue。
 
 `details` 为 `{ path, message }[]`。`input` 留在 `cause`。
+
+客户端表单可共用同一 schema，不能替代服务端校验。
 
 ## 6. 对外响应
 
@@ -127,4 +146,5 @@ HTTP 状态使用 `AppError.statusCode`。
 | `map-zod-error.ts` | Zod 4 → `BadRequestError` |
 | `map-prisma-error.ts` | Prisma 8 / SQL → `AppError` |
 | `to-app-error.ts` | 未知异常收口为 `AppError` |
-| `api-handler.ts` | Route Handler 的 catch、日志与响应 |
+| `api-handler.ts` | 声明 query/body schema、catch、日志与响应 |
+| `parse.ts` | `parseQuery` / `parseBody`（Zod） |
