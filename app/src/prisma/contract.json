@@ -13,20 +13,25 @@
     "namespaces": {
       "public": {
         "enum": {
+          "RouterScope": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "site",
+                "value": "site"
+              },
+              {
+                "name": "admin",
+                "value": "admin"
+              }
+            ]
+          },
           "RouterType": {
             "codecId": "pg/text@1",
             "members": [
               {
-                "name": "set",
-                "value": "set"
-              },
-              {
                 "name": "group",
                 "value": "group"
-              },
-              {
-                "name": "directory",
-                "value": "directory"
               },
               {
                 "name": "page",
@@ -92,6 +97,26 @@
                 "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "scope": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "RouterScope",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "sort": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
                   "kind": "scalar"
                 }
               },
@@ -175,6 +200,12 @@
                 "permissionIds": {
                   "column": "permission_ids"
                 },
+                "scope": {
+                  "column": "scope"
+                },
+                "sort": {
+                  "column": "sort"
+                },
                 "type": {
                   "column": "type"
                 },
@@ -203,8 +234,13 @@
                   "prefix": "system_router_permission_ids_elem_not_null"
                 },
                 {
-                  "expression": "\"type\" IN ('set', 'group', 'directory', 'page')",
-                  "name": "system_router_type_check_1a5a7e06",
+                  "expression": "\"scope\" IN ('site', 'admin')",
+                  "name": "system_router_scope_check_02f2bc4a",
+                  "prefix": "system_router_scope_check"
+                },
+                {
+                  "expression": "\"type\" IN ('group', 'page')",
+                  "name": "system_router_type_check_4ee189ea",
                   "prefix": "system_router_type_check"
                 }
               ],
@@ -260,6 +296,26 @@
                   },
                   "many": true,
                   "nativeType": "text",
+                  "nullable": false
+                },
+                "scope": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "RouterScope",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "sort": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 0
+                  },
+                  "nativeType": "int4",
                   "nullable": false
                 },
                 "type": {
@@ -318,6 +374,14 @@
                   "name": "system_router_path_idx_a72f861c",
                   "prefix": "system_router_path_idx",
                   "unique": false
+                },
+                {
+                  "columns": [
+                    "scope"
+                  ],
+                  "name": "system_router_scope_idx_5e57bd12",
+                  "prefix": "system_router_scope_idx",
+                  "unique": false
                 }
               ],
               "primaryKey": {
@@ -328,20 +392,25 @@
               "uniques": [
                 {
                   "columns": [
-                    "path",
-                    "parent_id"
+                    "parent_id",
+                    "path"
                   ]
                 }
               ]
             }
           },
           "valueSet": {
+            "RouterScope": {
+              "kind": "valueSet",
+              "values": [
+                "site",
+                "admin"
+              ]
+            },
             "RouterType": {
               "kind": "valueSet",
               "values": [
-                "set",
                 "group",
-                "directory",
                 "page"
               ]
             }
@@ -351,7 +420,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "652584b7499c8615c58b4d263327f3ef9dd09b3b15641e4a0a447101ef3df23f"
+    "storageHash": "6f6f723c7cb527ef015d01f2a026eeb8d02d00ca6534470c9e5410a661597d2c"
   },
   "execution": {
     "executionHash": "e0205ea0ba5dd94e1504de9adb86add0e220baf57a4b387b37433d8f2197562d",

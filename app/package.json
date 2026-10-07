@@ -23,6 +23,7 @@
     "@base-ui/react": "^1.8.0",
     "@prisma/orm-family-sql": "8.0.0-rc.13",
     "@prisma/orm-postgres": "8.0.0-rc.13",
+    "@tanstack/react-query": "^5.104.1",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
     "dotenv": "^18.0.4",

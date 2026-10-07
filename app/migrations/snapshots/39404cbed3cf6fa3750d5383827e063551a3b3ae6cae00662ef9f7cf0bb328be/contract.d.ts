@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'6f6f723c7cb527ef015d01f2a026eeb8d02d00ca6534470c9e5410a661597d2c'>;
+  StorageHashBase<'39404cbed3cf6fa3750d5383827e063551a3b3ae6cae00662ef9f7cf0bb328be'>;
 export type ExecutionHash =
   ExecutionHashBase<'e0205ea0ba5dd94e1504de9adb86add0e220baf57a4b387b37433d8f2197562d'>;
 export type ProfileHash =
@@ -259,9 +259,8 @@ export type FieldOutputTypes = {
       readonly parentId: CodecTypes['pg/text@1']['output'] | null;
       readonly path: CodecTypes['pg/text@1']['output'] | null;
       readonly permissionIds: ReadonlyArray<CodecTypes['pg/text@1']['output']>;
-      readonly scope: 'site' | 'admin' | null;
       readonly sort: CodecTypes['pg/int4@1']['output'];
-      readonly type: 'group' | 'page';
+      readonly type: 'set' | 'group' | 'directory' | 'page';
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
     };
   };
@@ -277,9 +276,8 @@ export type FieldInputTypes = {
       readonly parentId: CodecTypes['pg/text@1']['input'] | null;
       readonly path: CodecTypes['pg/text@1']['input'] | null;
       readonly permissionIds: ReadonlyArray<CodecTypes['pg/text@1']['input']>;
-      readonly scope: 'site' | 'admin' | null;
       readonly sort: CodecTypes['pg/int4@1']['input'];
-      readonly type: 'group' | 'page';
+      readonly type: 'set' | 'group' | 'directory' | 'page';
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['input'];
     };
   };
@@ -295,9 +293,8 @@ export type StorageColumnTypes = {
       readonly parent_id: CodecTypes['pg/text@1']['output'] | null;
       readonly path: CodecTypes['pg/text@1']['output'] | null;
       readonly permission_ids: ReadonlyArray<CodecTypes['pg/text@1']['output']>;
-      readonly scope: 'site' | 'admin' | null;
       readonly sort: CodecTypes['pg/int4@1']['output'];
-      readonly type: 'group' | 'page';
+      readonly type: 'set' | 'group' | 'directory' | 'page';
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
     };
   };
@@ -313,9 +310,8 @@ export type StorageColumnInputTypes = {
       readonly parent_id: CodecTypes['pg/text@1']['input'] | null;
       readonly path: CodecTypes['pg/text@1']['input'] | null;
       readonly permission_ids: ReadonlyArray<CodecTypes['pg/text@1']['input']>;
-      readonly scope: 'site' | 'admin' | null;
       readonly sort: CodecTypes['pg/int4@1']['input'];
-      readonly type: 'group' | 'page';
+      readonly type: 'set' | 'group' | 'directory' | 'page';
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['input'];
     };
   };
@@ -331,9 +327,8 @@ export namespace Models {
     parentId: CodecTypes['pg/text@1']['output'] | null;
     path: CodecTypes['pg/text@1']['output'] | null;
     permissionIds: ReadonlyArray<CodecTypes['pg/text@1']['output']>;
-    scope: 'site' | 'admin' | null;
     sort: CodecTypes['pg/int4@1']['output'];
-    type: 'group' | 'page';
+    type: 'set' | 'group' | 'directory' | 'page';
     updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
     children: public_SystemRouter[];
     parent: public_SystemRouter | null;
@@ -416,11 +411,6 @@ type ContractBase = Omit<
                     readonly value: DefaultLiteralValue<'pg/text@1', readonly []>;
                   };
                 };
-                readonly scope: {
-                  readonly nativeType: 'text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: true;
-                };
                 readonly sort: {
                   readonly nativeType: 'int4';
                   readonly codecId: 'pg/int4@1';
@@ -446,7 +436,7 @@ type ContractBase = Omit<
                 };
               };
               primaryKey: { readonly columns: readonly ['id'] };
-              uniques: readonly [{ readonly columns: readonly ['parent_id', 'path'] }];
+              uniques: readonly [{ readonly columns: readonly ['path', 'parent_id'] }];
               indexes: readonly [
                 {
                   readonly name: 'system_router_parent_id_idx_ab33b399';
@@ -458,12 +448,6 @@ type ContractBase = Omit<
                   readonly name: 'system_router_path_idx_a72f861c';
                   readonly prefix: 'system_router_path_idx';
                   readonly columns: readonly ['path'];
-                  readonly unique: false;
-                },
-                {
-                  readonly name: 'system_router_scope_idx_5e57bd12';
-                  readonly prefix: 'system_router_scope_idx';
-                  readonly columns: readonly ['scope'];
                   readonly unique: false;
                 },
               ];
@@ -484,13 +468,9 @@ type ContractBase = Omit<
             };
           };
           readonly valueSet: {
-            readonly RouterScope: {
-              readonly kind: 'valueSet';
-              readonly values: readonly ['site', 'admin'];
-            };
             readonly RouterType: {
               readonly kind: 'valueSet';
-              readonly values: readonly ['group', 'page'];
+              readonly values: readonly ['set', 'group', 'directory', 'page'];
             };
           };
         };
@@ -550,10 +530,6 @@ type ContractBase = Omit<
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
                 readonly many: true;
               };
-              readonly scope: {
-                readonly nullable: true;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
-              };
               readonly sort: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
@@ -607,7 +583,6 @@ type ContractBase = Omit<
                 readonly parentId: { readonly column: 'parent_id' };
                 readonly path: { readonly column: 'path' };
                 readonly permissionIds: { readonly column: 'permission_ids' };
-                readonly scope: { readonly column: 'scope' };
                 readonly sort: { readonly column: 'sort' };
                 readonly type: { readonly column: 'type' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
@@ -616,17 +591,12 @@ type ContractBase = Omit<
           };
         };
         readonly enum: {
-          readonly RouterScope: {
-            readonly codecId: 'pg/text@1';
-            readonly members: readonly [
-              { readonly name: 'site'; readonly value: 'site' },
-              { readonly name: 'admin'; readonly value: 'admin' },
-            ];
-          };
           readonly RouterType: {
             readonly codecId: 'pg/text@1';
             readonly members: readonly [
+              { readonly name: 'set'; readonly value: 'set' },
               { readonly name: 'group'; readonly value: 'group' },
+              { readonly name: 'directory'; readonly value: 'directory' },
               { readonly name: 'page'; readonly value: 'page' },
             ];
           };
