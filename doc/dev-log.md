@@ -1,5 +1,9 @@
 # 开发日志
 
+## 2026-10-05
+
+- 重设计系统路由文档：去掉 `set` / `directory`，类型收为 `group` / `page`；根节点带 `scope`（`site` / `admin`）。`group` 无 path 为菜单分组，有 path 为 URL 目录；`page` 可用空段作索引页。同 scope 绝对 path 唯一。合同与实现尚未迁移。
+
 ## 2026-09-29
 
 - 接入 Vitest，配置改为按 ES 模块处理。

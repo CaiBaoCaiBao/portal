@@ -96,7 +96,7 @@ flowchart TB
 
 ### 3.1 模块结构划分
 
-系统路由用同一棵树同时维护公开站点导航和后台管理菜单；内容管理下分更新日志、文章、作品集，保存时在同一事务里写入正文和版本快照，并挂到分类、标签和媒体；系统日志记录登录和后台写操作。
+系统路由用一张表、两棵逻辑树（公开 `site` / 后台 `admin`）维护导航；内容管理下分更新日志、文章、作品集，保存时在同一事务里写入正文和版本快照，并挂到分类、标签和媒体；系统日志记录登录和后台写操作。
 
 ```mermaid
 flowchart TB
@@ -137,7 +137,7 @@ flowchart TB
 
 | 模块名称 | 子模块 | 职责描述 | 核心设计要点 |
 | ---- | ---- | ---- | ---- |
-| 系统路由 | — | 用同一棵路由树维护公开站点导航和后台管理菜单 | 自关联树。节点类型为 set、group、directory、page。后台节点使用 icon 与 permissionIds。删除父节点时限制级联 |
+| 系统路由 | — | 一张表两棵逻辑树维护公开导航和后台菜单 | 自关联树。类型仅 group / page；根带 scope（site / admin）。group 无 path 为菜单分组，有 path 为 URL 目录；page 可为空段索引页。后台节点使用 icon 与 permissionIds。删除父节点时限制级联 |
 | 分类与标签管理 | — | 为更新日志、文章和作品集提供分类归属与多标签 | 分类与标签各自独立，通过关联挂到内容，同名项靠关联消歧 |
 | 内容管理 | 更新日志管理 | 发布和维护站点更新记录 | 与文章、作品集共用保存事务：version 递增，正文与版本快照双表写入 |
 | 内容管理 | 文章管理 | 创建和修改博客文章 | 保存时自动递增 version，正文与快照在同一事务中写入 |
@@ -160,7 +160,7 @@ flowchart TB
 | 未认证 | 无会话访问后台写操作 | 拒绝并回到登录，不记操作审计 |
 | 无权限 | 权限不在节点 `permissionIds` 中 | 隐藏菜单，拒绝写操作 |
 | 未找到 | path 无节点或内容未发布 | 公开站点 404 |
-| 冲突 | 同父节点下 `path` 重复 | 提示冲突，事务回滚 |
+| 冲突 | 同父 `path` 重复，或同 scope 绝对 path 重复 | 提示冲突，事务回滚 |
 | 约束 | 删除仍有子节点的路由 | Restrict 拒绝 |
 | 事务失败 | 正文或快照写入失败 | 整单回滚，不记成功审计 |
 | 登录失败 | 凭证不正确 | 拒绝登录，写入登录审计失败记录 |
@@ -179,11 +179,13 @@ erDiagram
   SYSTEM_ROUTER {
     string id PK
     string name
+    RouterScope scope
     string path
     RouterType type
     string icon
     string parent_id FK
     boolean is_active
+    int sort
     string_array permission_ids
     timestamptz created_at
     timestamptz updated_at
@@ -195,21 +197,26 @@ erDiagram
 ```prisma
 // use prisma-8
 
+enum RouterScope {
+  site
+  admin
+}
+
 enum RouterType {
-  set
   group
-  directory
   page
 }
 
 model SystemRouter {
   id             String               @id @default(uuid())
   name           String
+  scope          RouterScope?
   path           String?
   type           RouterType           @default(page)
   icon           String?
   parentId       String?              @map("parent_id")
   isActive       Boolean              @default(true) @map("is_active")
+  sort           Int                  @default(0) @map("sort")
   permissionIds  String[]             @default([]) @map("permission_ids")
   createdAt      TimestamptzString    @default(now()) @map("created_at")
   updatedAt      temporal.updatedAtString()
@@ -217,12 +224,15 @@ model SystemRouter {
   parent         SystemRouter?        @relation("SystemRouterTree", fields: [parentId], references: [id], onDelete: Restrict)
   children       SystemRouter[]       @relation("SystemRouterTree")
 
-  @@unique([path, parentId])
+  @@unique([parentId, path])
   @@index([path])
   @@index([parentId])
+  @@index([scope])
   @@map("system_router")
 }
 ```
+
+树规则、绝对 path 组装与接口见 [系统路由模块](./detail-function/system-router.md)。本节与合同不一致时：文档已重设计、Prisma 尚未迁移的，以详设为准。
 
 ## 6. 非功能设计
 
@@ -252,5 +262,12 @@ model SystemRouter {
 - **恢复：** 版本快照保留历史正文，误改后可以按快照找回对应版本。数据库由 PostgreSQL 备份承担，应用本身不做多活。
 
 ## 7. 命名约定
+
+| 名称 | 含义 | 
+| ---- | ---- |
+| DTO | 跨边界传输 |
+| VO | 显示层对象 |
+| BO | Service 层的返回对象 |
+| PO | DAO 层的返回对象 |
 
 ## 参考资料

@@ -44,7 +44,7 @@ sequenceDiagram
 
 ## 3. 后台菜单解析与权限校验
 
-已登录用户读取同一棵系统路由树。按 `isActive` 与 `permissionIds` 过滤后，得到后台菜单。公开站点导航不走这套权限过滤。
+已登录用户读取 `scope=admin` 的系统路由树。按 `isActive` 与 `permissionIds` 过滤后，得到后台菜单。公开站点只读 `scope=site`，不走这套权限过滤。
 
 ```mermaid
 sequenceDiagram
@@ -63,7 +63,7 @@ sequenceDiagram
 
 ## 4. 公开路径解析与 SSR 渲染
 
-公开站点按请求路径匹配路由树中的页面节点，再取已发布内容及其分类、标签、媒体引用，由服务端渲染 HTML。
+公开站点只在 `scope=site` 树上按请求路径匹配启用的 `page`（含 `path=""` 的索引页），再取已发布内容及其分类、标签、媒体引用，由服务端渲染 HTML。后台 URL 不走这条匹配，由 App Router 文件渲染。
 
 ```mermaid
 sequenceDiagram
