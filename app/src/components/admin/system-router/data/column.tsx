@@ -10,6 +10,9 @@ import {
     createExpandedRowModel,
     columnVisibilityFeature,
     rowSelectionFeature,
+    globalFilteringFeature,
+    createFilteredRowModel,
+    filterFn_includesString
 } from '@tanstack/react-table';
 import { SystemRouterTreeNodeVO } from '@/type/system-router.type';
 import { ChevronRight } from 'lucide-react';
@@ -54,6 +57,9 @@ export const features = tableFeatures({
     rowSelectionFeature,
     columnSizingFeature,
     expandedRowModel: createExpandedRowModel(),
+    filteredRowModel: createFilteredRowModel(),
+    globalFilteringFeature,
+    filterFns: { includesString: filterFn_includesString },
 });
 export type DataTableFeatures = typeof features;
 const columnHelper = createColumnHelper<DataTableFeatures, SystemRouterTreeNodeVO>();

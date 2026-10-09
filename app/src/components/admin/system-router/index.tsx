@@ -8,6 +8,12 @@ import { Plus } from "lucide-react";
 import { DetailSheet } from "./detail-sheet";
 import { SaveDialogDrawer } from "./save-dialog-drawer";
 import { DeleteDialogDrawer } from "./delete-dialog-drawer";
+import {
+    InputGroup,
+    InputGroupInput,
+    InputGroupAddon
+} from "@/components/ui/input-group";
+import { Search } from "lucide-react";
 
 interface Props {
     items: SystemRouterTreeNodeVO[]
@@ -22,13 +28,24 @@ export function SystemRouter({ items }: Props) {
     });
     return (
         <div className="space-y-2">
-            <div>
+            <div className="flex flex-col md:flex-row gap-2">
+                <InputGroup>
+                    <InputGroupAddon align="inline-start">
+                        <Search/>
+                    </InputGroupAddon>
+                    <InputGroupInput
+                        value={state.searchVal}
+                        onChange={(e) => actions.changeSearchVal(e.target.value)}
+                        placeholder="Search"
+                    />
+                </InputGroup>
                 <Button
                     size="sm"
                     onClick={() => {
                         actions.handleRowSelect(undefined);
                         actions.handleModel("create");
                     }}
+                    className="w-full md:w-auto"
                 >
                     <Plus />
                     New Router
@@ -39,6 +56,8 @@ export function SystemRouter({ items }: Props) {
                     <TreeTable
                         data={state.tree}
                         columns={columns}
+                        globalFilter={state.searchVal}
+                        onGlobalFilterChange={actions.changeSearchVal}
                     />
                 </div>
             </div>

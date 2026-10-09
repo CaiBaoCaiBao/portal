@@ -21,6 +21,7 @@ type PageState = {
     selectedRow?: SystemRouterTreeNodeVO;
     tree: SystemRouterTreeNodeVO[];
     isDeleting: boolean;
+    searchVal: string;
 }
 
 type PageActions = {
@@ -28,6 +29,7 @@ type PageActions = {
     handleRowSelect: (row?: SystemRouterTreeNodeVO) => void;
     handleChangeStatus: (id: string, isActive: boolean) => void;
     handleDelete: (id: string) => void;
+    changeSearchVal: (val: string) => void;
 }
 export function usePage(options: PageOptions): [PageState, PageActions] {
     const queryClient = useQueryClient();
@@ -67,7 +69,8 @@ export function usePage(options: PageOptions): [PageState, PageActions] {
         model: "",
         selectedRow: void 0,
         tree,
-        isDeleting
+        isDeleting,
+        searchVal:"",
     });
 
     const handleModel = (model: Model) => {
@@ -92,11 +95,18 @@ export function usePage(options: PageOptions): [PageState, PageActions] {
         void deleteMutation(id);
     }
 
+    const changeSearchVal = (val: string) => {
+        setState((prev) => ({
+            ...prev,
+            searchVal: val
+        }));
+    }
 
     return [{ ...state, tree, isDeleting }, {
         handleModel,
         handleRowSelect,
         handleChangeStatus,
-        handleDelete
+        handleDelete,
+        changeSearchVal
     }];
 }

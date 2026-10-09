@@ -7,22 +7,48 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { useTable, ColumnDef } from "@tanstack/react-table";
-import { DataTableFeatures, features } from "./column";
+import {
+    useTable,
+    ColumnDef,
+    Row
+} from "@tanstack/react-table";
+import {
+    DataTableFeatures,
+    features
+} from "./column";
 import { SystemRouterTreeNodeVO } from "@/type/system-router.type";
 
 interface Props {
     data: SystemRouterTreeNodeVO[];
     columns: ColumnDef<DataTableFeatures, SystemRouterTreeNodeVO>[];
+    globalFilter: string;
+    onGlobalFilterChange: (value: string) => void;
 }
 
-export function TreeTable({ data, columns }: Props) {
+const nameAndPathFilter = (
+    row: Row<DataTableFeatures, SystemRouterTreeNodeVO>,
+    _columnId: string,
+    filterValue: string,
+) => {
+    const keyword = String(filterValue).trim().toLocaleLowerCase();
+    if (!keyword) return true;
+    const name = row.original.name.toLocaleLowerCase();
+    const path = (row.original.path ?? "").toLocaleLowerCase();
+    return name.includes(keyword) || path.includes(keyword);
+
+}
+
+export function TreeTable({ data, columns, globalFilter, onGlobalFilterChange }: Props) {
     const table = useTable({
         features,
         data,
         columns,
         getRowId: (row) => row.id,
         getSubRows: (row) => row.children,
+        state: { globalFilter },
+        onGlobalFilterChange,
+        globalFilterFn: nameAndPathFilter,
+        filterFromLeafRows: true,
     });
     return (
         <Table className="table-fixed">
