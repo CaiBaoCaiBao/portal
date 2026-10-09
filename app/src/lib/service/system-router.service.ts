@@ -1,6 +1,9 @@
 import "server-only";
 
-import type { CreateSystemRouterDTO } from "@/lib/schema/system-router.schema";
+import type {
+    CreateSystemRouterDTO,
+    UpdateSystemRouterDTO,
+} from "@/lib/schema/system-router.schema";
 import { SystemRouterDao } from "@/lib/dao";
 import {
     BadRequestError,
@@ -105,6 +108,89 @@ export class SystemRouterService {
         });
     }
 
+    static async update(id: string, dto: UpdateSystemRouterDTO) {
+        const existing = await SystemRouterDao.findById(id);
+        if (!existing) {
+            throw new NotFoundError("路由不存在", MODULE);
+        }
+
+        const nextParentId =
+            dto.parentId !== undefined ? dto.parentId : existing.parentId;
+        const nextPath = dto.path !== undefined ? dto.path : existing.path;
+        const parentChanged = dto.parentId !== undefined && dto.parentId !== existing.parentId;
+        const pathChanged = dto.path !== undefined && dto.path !== existing.path;
+        const isRoot = nextParentId === null;
+
+        if (isRoot) {
+            if (existing.type !== "group") {
+                throw new BadRequestError("仅分组可为根节点", MODULE);
+            }
+            if (existing.parentId !== null) {
+                throw new BadRequestError("非根不可变成根", MODULE);
+            }
+        }
+
+        if (dto.parentId !== undefined) {
+            if (dto.parentId === id) {
+                throw new BadRequestError("不能迁到自身", MODULE);
+            }
+            if (existing.parentId === null && dto.parentId !== null) {
+                throw new BadRequestError("根节点不能移动", MODULE);
+            }
+            if (dto.parentId !== null) {
+                const parent = await SystemRouterDao.findById(dto.parentId);
+                if (!parent) {
+                    throw new NotFoundError("父节点不存在", MODULE);
+                }
+                if (parent.type !== "group") {
+                    throw new BadRequestError("父节点必须是分组", MODULE);
+                }
+                const rows = await SystemRouterDao.listAll();
+                const descendants = collectReachable(rows, id);
+                if (descendants.some((row) => row.id === dto.parentId)) {
+                    throw new BadRequestError("不能迁到子孙节点", MODULE);
+                }
+            }
+        }
+
+        this.assertPathForNode({
+            type: existing.type,
+            isRoot,
+            scope: existing.scope,
+            path: nextPath,
+        });
+
+        if (parentChanged || pathChanged) {
+            const sibling = await SystemRouterDao.findByParentAndPath(
+                nextParentId,
+                nextPath,
+            );
+            if (sibling && sibling.id !== id) {
+                throw new ConflictError("同级路径已存在", MODULE);
+            }
+
+            const rows = await SystemRouterDao.listAll();
+            const nextRows = rows.map((row) =>
+                row.id === id
+                    ? { ...row, parentId: nextParentId, path: nextPath }
+                    : row,
+            );
+            this.assertUniqueAbsolutePaths(nextRows);
+        }
+
+        await SystemRouterDao.updateById(id, {
+            ...(dto.name !== undefined ? { name: dto.name } : {}),
+            ...(dto.isActive !== undefined ? { isActive: dto.isActive } : {}),
+            ...(dto.icon !== undefined ? { icon: dto.icon } : {}),
+            ...(dto.permissionIds !== undefined
+                ? { permissionIds: dto.permissionIds }
+                : {}),
+            ...(dto.sort !== undefined ? { sort: dto.sort } : {}),
+            ...(dto.path !== undefined ? { path: dto.path } : {}),
+            ...(dto.parentId !== undefined ? { parentId: dto.parentId } : {}),
+        });
+    }
+
     /** 编辑树：两棵根、相对 path、不剪枝；keyword 会保留祖先 */
     static async listTree(query?: ListQuery): Promise<SystemRouterTreeNodeVO[]> {
         let rows: RouterRow[] = await SystemRouterDao.listAll();
@@ -142,6 +228,18 @@ export class SystemRouterService {
 
         const prefix = tree.path ? [tree.path] : [];
         return tree.children.map((child) => this.toNavItem(child, prefix));
+    }
+
+    static async delete(id: string) {
+        const existing = await SystemRouterDao.findById(id);
+        if (!existing) {
+            throw new NotFoundError("路由不存在", MODULE);
+        }
+        const child = await SystemRouterDao.findFirstChild(id);
+        if (child) {
+            throw new BadRequestError("仍有子节点，无法删除", MODULE);
+        }
+        await SystemRouterDao.deleteById(id);
     }
 
     static pruneForNav(
@@ -219,6 +317,55 @@ export class SystemRouterService {
         }
 
         return chain;
+    }
+
+    private static assertPathForNode(node: {
+        type: RouterRow["type"];
+        isRoot: boolean;
+        scope: RouterRow["scope"];
+        path: string | null;
+    }) {
+        if (node.isRoot) {
+            if (node.scope === "site" && node.path !== null) {
+                throw new BadRequestError("站点根路径必须为空", MODULE);
+            }
+            if (node.scope === "admin" && node.path !== "admin") {
+                throw new BadRequestError("后台根路径必须为 admin", MODULE);
+            }
+            return;
+        }
+        if (node.type === "page") {
+            if (node.path == null) {
+                throw new BadRequestError("页面路径不能为空", MODULE);
+            }
+            return;
+        }
+        if (node.path === "") {
+            throw new BadRequestError("空路径仅页面可用", MODULE);
+        }
+    }
+
+    private static assertUniqueAbsolutePaths(rows: RouterRow[]) {
+        const byId = new Map(rows.map((row) => [row.id, row]));
+        const seen = new Map<string, string>();
+
+        for (const row of rows) {
+            if (row.path == null) continue;
+            const parentId = row.parentId;
+            if (!parentId && row.type !== "group") continue;
+            const ancestors = parentId ? this.ancestorChain(parentId, byId) : [];
+            const absolute = joinAbsolutePath([
+                ...ancestors.map((node) => node.path),
+                row.path,
+            ]);
+            const rootId = ancestors[0]?.id ?? row.id;
+            const key = `${rootId}:${absolute}`;
+            const other = seen.get(key);
+            if (other && other !== row.id) {
+                throw new ConflictError("绝对路径已存在", MODULE);
+            }
+            seen.set(key, row.id);
+        }
     }
 
 }

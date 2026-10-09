@@ -20,6 +20,13 @@ type CreateRow = Pick<
     | "sort"
 >;
 
+type UpdateRow = Partial<
+    Pick<
+        SystemRouterInput,
+        "name" | "path" | "parentId" | "isActive" | "icon" | "permissionIds" | "sort"
+    >
+>;
+
 async function run<T>(fn: () => Promise<T>): Promise<T> {
     try {
         return await fn();
@@ -56,6 +63,14 @@ export class SystemRouterDao {
         );
     }
 
+    static findFirstChild(parentId: string) {
+        return run(() =>
+            db.orm.public.SystemRouter.where({
+                parentId,
+            }).first(),
+        );
+    }
+
     static listAll(query?: ListQuery): Promise<SystemRouterOutput[]> {
         return run(async () => {
             let base = db.orm.public.SystemRouter;
@@ -78,5 +93,17 @@ export class SystemRouterDao {
 
     static insert(data: CreateRow) {
         return run(() => db.orm.public.SystemRouter.create(data));
+    }
+
+    static updateById(id: string, data: UpdateRow) {
+        return run(() =>
+            db.orm.public.SystemRouter.where({ id }).update(data),
+        );
+    }
+
+    static deleteById(id: string) {
+        return run(() =>
+            db.orm.public.SystemRouter.where({ id }).delete(),
+        );
     }
 }

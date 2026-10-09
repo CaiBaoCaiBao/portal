@@ -13,7 +13,7 @@ export default async function Layout({ children }: LayoutProps<"/admin">) {
                 <div className="flex flex-1">
                     <AdminSidebar />
                     <SidebarInset>
-                        <div className="flex-1">{children}</div>
+                        <div className="flex-1 p-4">{children}</div>
                     </SidebarInset>
                 </div>
             </SidebarProvider>

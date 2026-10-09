@@ -9,7 +9,6 @@ import {
     Sidebar,
     SidebarContent,
     SidebarHeader,
-    SidebarRail,
 } from "@/components/ui/sidebar";
 import { AdminSidebarNav } from "@/components/admin/admin-sidebar-nav";
 
@@ -30,7 +29,6 @@ export async function AdminSidebar() {
                 <SidebarContent>
                     <AdminSidebarNav items={items} />
                 </SidebarContent>
-                <SidebarRail />
             </Sidebar>
         </HydrationBoundary>
     );

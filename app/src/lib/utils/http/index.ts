@@ -8,15 +8,6 @@ import {
     type UploadOptions,
 } from "./type";
 
-export type {
-    HttpOptions,
-    OutOptions,
-    OutResult,
-    UploadOptions,
-    UploadProgress,
-} from "./type";
-export { ClientRequestError } from "./type";
-
 const DEFAULT_TIMEOUT_MS = 15_000;
 
 type UploadOutOptions = UploadOptions & Pick<OutOptions, "credentials" | "parse">;
