@@ -1,7 +1,11 @@
 "use client";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import { InputHTMLAttributes, Ref } from "react";
+import {
+    InputHTMLAttributes,
+    Ref,
+    DragEvent,
+} from "react";
 interface Props {
     children: React.ReactNode;
     getInputProps: (
@@ -11,19 +15,31 @@ interface Props {
     };
     openFileDialog: () => void;
     className?: string;
+    handleDragOver?: (e: DragEvent<HTMLElement>) => void;
+    handleDragLeave?: (e: DragEvent<HTMLElement>) => void;
+    handleDragEnter?: (e: DragEvent<HTMLElement>) => void;
+    handleDrop?: (e: DragEvent<HTMLElement>) => void;
 }
 
 export function FileUpload({
     children,
     className,
     getInputProps,
-    openFileDialog
+    openFileDialog,
+    handleDragOver,
+    handleDragLeave,
+    handleDragEnter,
+    handleDrop
 }: Props) {
     return (
         <div
             role="button"
             onClick={openFileDialog}
             className={cn(className ? "w-full" : "w-fit")}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDragEnter={handleDragEnter}
+            onDrop={handleDrop}
         >
             <Input
                 {...getInputProps()}

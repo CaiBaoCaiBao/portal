@@ -1,24 +1,49 @@
 import {
     InputHTMLAttributes,
     Ref,
-    ChangeEvent
+    ChangeEvent,
+    DragEvent,
 } from "react";
 
-export type FileUploadState = {
+export type UploadState = "idle" | "uploading" | "success" | "error";
 
+export type FileMetadata = {
+    id: string;
+    name: string;
+    size: number;
+    mime: string;
+    url: string;
+    state: UploadState;
+}
+
+export type FileWithPreview = {
+    id: string;
+    file: File | FileMetadata;
+    preview?: string;
+}
+
+export type FileUploadState = {
+    files: FileWithPreview[];
+    isDragging: boolean;
+    errors: string[];
 }
 
 export type FileUploadAction = {
-    // 处理文件变化
-    handleFileChange: (e: ChangeEvent<HTMLInputElement>) => void
-    // 打开文件对话框
+    addFiles: (files: File[] | FileList) => void;
+    clearFiles: () => void;
+    removeFile: (id: string) => void;
+    handleFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
+    handleDragOver: (e: DragEvent<HTMLElement>) => void;
+    handleDragLeave: (e: DragEvent<HTMLElement>) => void;
+    handleDragEnter: (e: DragEvent<HTMLElement>) => void;
+    handleDrop: (e: DragEvent<HTMLElement>) => void;
     openFileDialog: () => void
-    // 获取输入框的props
     getInputProps: (
         props?: InputHTMLAttributes<HTMLInputElement>
     ) => InputHTMLAttributes<HTMLInputElement> & {
         ref: Ref<HTMLInputElement>
-    }
+    },
+    clearErrors: () => void;
 }
 
 export type FileUploadOptions = {
@@ -26,4 +51,8 @@ export type FileUploadOptions = {
     accept?: string;
     maxFiles?: number;
     maxSize?: number;
+    initialFiles?: FileMetadata[];
+    onError?: (errors: string[]) => void;
+    onFilesChange?: (files: FileWithPreview[]) => void;
+    onFilesAdded?: (files: FileWithPreview[]) => void;
 }
