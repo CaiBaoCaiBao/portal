@@ -1,10 +1,11 @@
+import { Provider } from "./provider";
 interface Props extends LayoutProps<"/admin"> {
 }
 
 export default function Layout({ children }: Props) {
     return (
-        <div>
+        <Provider>
             {children}
-        </div>
+        </Provider>
     )
 }
