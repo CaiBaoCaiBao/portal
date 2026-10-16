@@ -3,10 +3,16 @@ import { useFileUpload } from "@/hooks/use-file-upload";
 import { FileUpload } from "@/components/file-upload";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-
 export function FileUploadLab() {
     const [state, action] = useFileUpload({
         maxSize: 2 * 1024 * 1024,
+        multiple: true,
+        onFilesAdded(files) {
+            console.log("onFilesAdded", files);
+        },
+        onFilesChange(files) {
+            console.log("onFilesChange", files);
+        },
     });
     return (
         <div>
@@ -20,6 +26,13 @@ export function FileUploadLab() {
                 openFileDialog={action.openFileDialog}
             >
                 Click to upload file
+                <div>
+                    {state.errors.map((error, errorIndex) => {
+                        return (
+                            <div key={errorIndex} className="text-red-500">{error}</div>
+                        )
+                    })}
+                </div>
             </FileUpload>
             <div>
                 {state.files.map((file) => {
