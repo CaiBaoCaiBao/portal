@@ -44,6 +44,7 @@ export type FileUploadAction = {
         ref: Ref<HTMLInputElement>
     },
     clearErrors: () => void;
+    updateFilePreview: (id: string, url: string) => void;
 }
 
 export type FileUploadOptions = {

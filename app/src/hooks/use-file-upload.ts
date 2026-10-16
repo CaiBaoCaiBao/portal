@@ -3,6 +3,7 @@ import {
     useCallback,
     ChangeEvent,
     DragEvent,
+    useEffectEvent,
 } from "react";
 import type {
     FileUploadState,
@@ -43,12 +44,43 @@ export function useFileUpload(options: FileUploadOptions = {}): [FileUploadState
         errors: [],
     });
 
+    const emitFilesChange = useEffectEvent((files: FileWithPreview[]) => {
+        onFilesChange?.(files);
+    });
+    const emitFilesAdded = useEffectEvent((files: FileWithPreview[]) => {
+        onFilesAdded?.(files);
+    });
+    const emitError = useEffectEvent((errors: string[]) => {
+        onError?.(errors);
+    });
+
     /** @description 创建文件预览 */
     const createPreview = useCallback((file: File | FileMetadata): string | undefined => {
         if (file instanceof File) {
             return URL.createObjectURL(file);
         }
         return file.url;
+    }, []);
+
+    /** @description 更新文件预览 */
+    const updateFilePreview = useCallback((id: string, url: string) => {
+        let nextFiles: FileWithPreview[] | null = null;
+        setState((prev) => {
+             nextFiles = prev.files.map((f) => {
+                if (f.id !== id) return f;
+                // 释放旧 blob，避免泄漏
+                if (
+                    f.preview?.startsWith("blob:") &&
+                    f.file instanceof File &&
+                    f.file.type.startsWith("image/")
+                ) {
+                    URL.revokeObjectURL(f.preview);
+                }
+                return { ...f, preview: url };
+            });
+            return { ...prev, files: nextFiles };
+        });
+        if (nextFiles) emitFilesChange(nextFiles);
     }, []);
 
     /** @description 生成唯一ID */
@@ -135,7 +167,7 @@ export function useFileUpload(options: FileUploadOptions = {}): [FileUploadState
             state.files.length + newFilesArray.length > maxFiles
         ) {
             errors.push(`最多上传 ${maxFiles} 个文件`);
-            onError?.(errors);
+            emitError(errors);
             setState(prev => ({ ...prev, errors }));
             return;
         }
@@ -171,20 +203,21 @@ export function useFileUpload(options: FileUploadOptions = {}): [FileUploadState
             }
 
             if (validFiles.length > 0) {
-                onFilesAdded?.(validFiles);
+                let newFiles: FileWithPreview[] | null = null;
+                emitFilesAdded(validFiles);
                 setState((prev) => {
-                    const newFiles = !multiple ?
-                        [...prev.files, ...validFiles] :
-                        [...validFiles];
-                    onFilesChange?.(newFiles);
+                    newFiles = !multiple
+                        ? [...prev.files, ...validFiles]
+                        : [...validFiles];
                     return {
                         ...prev,
                         files: newFiles,
                         errors,
                     }
                 })
+                if (newFiles) emitFilesChange(newFiles);
             } else if (errors.length > 0) {
-                onError?.(errors);
+                emitError(errors);
                 setState(prev => ({ ...prev, errors }));
             }
 
@@ -201,13 +234,12 @@ export function useFileUpload(options: FileUploadOptions = {}): [FileUploadState
         createPreview,
         generateUniqueId,
         clearFiles,
-        onFilesChange,
-        onFilesAdded,
     ]);
 
     /** @description 将文件从列表中移除 */
     const removeFile = useCallback(
         (id: string) => {
+            let newFiles: FileWithPreview[] | null = null;
             setState((prev) => {
                 const fileToRemove = prev.files.find((file) => file.id === id)
                 if (
@@ -219,8 +251,7 @@ export function useFileUpload(options: FileUploadOptions = {}): [FileUploadState
                     URL.revokeObjectURL(fileToRemove.preview)
                 }
 
-                const newFiles = prev.files.filter((file) => file.id !== id)
-                onFilesChange?.(newFiles)
+                newFiles = prev.files.filter((file) => file.id !== id)
 
                 return {
                     ...prev,
@@ -228,8 +259,9 @@ export function useFileUpload(options: FileUploadOptions = {}): [FileUploadState
                     errors: [],
                 }
             })
+            if (newFiles) emitFilesChange(newFiles);
         },
-        [onFilesChange]
+        []
     );
 
     /** @description 处理文件变化 */
@@ -318,5 +350,6 @@ export function useFileUpload(options: FileUploadOptions = {}): [FileUploadState
         handleDragEnter,
         handleDrop,
         clearErrors,
+        updateFilePreview,
     }];
 }

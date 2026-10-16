@@ -5,7 +5,9 @@ const serverEnvSchema = z.object({
     IsPro: z.boolean(),
 
     AccessKey: z.string(),
+    SecretKey: z.string(),
     Domain: z.string(),
+    Bucket: z.string(),
 }).transform((data) => ({
     app: {
         isPro: data.IsPro,
@@ -13,7 +15,9 @@ const serverEnvSchema = z.object({
     },
     qiniu: {
         accessKey: data.AccessKey,
+        secretKey: data.SecretKey,
         domain: data.Domain,
+        bucket: data.Bucket,
     }
 }));
 
@@ -24,5 +28,7 @@ export const serverEnv = serverEnvSchema.parse({
     IsPro: process.env.NODE_ENV === "production",
     
     AccessKey: process.env.QINIU_ACCESS_KEY,
+    SecretKey: process.env.QINIU_SECRET_KEY,
     Domain: process.env.QINIU_DOMAIN,
+    Bucket: process.env.QINIU_BUCKET,
 });
