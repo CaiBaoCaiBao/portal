@@ -63,7 +63,7 @@ export function useFileUpload(options: FileUploadOptions = {}): [FileUploadState
     }, []);
 
     /** @description 更新文件预览 */
-    const updateFilePreview = useCallback((id: string, url: string) => {
+    const updateFilePreview = useCallback(async (id: string, url: string) => {
         let nextFiles: FileWithPreview[] | null = null;
         setState((prev) => {
              nextFiles = prev.files.map((f) => {

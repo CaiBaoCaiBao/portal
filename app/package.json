@@ -7,12 +7,22 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "shadcn": "pnpm dlx shadcn@latest add"
+    "shadcn": "pnpm dlx shadcn@latest add",
+    "contract:emit": "prisma contract emit",
+    "db:init:dev": "cmd /c \"set NODE_ENV=development&& prisma db init\"",
+    "db:init:test": "cmd /c \"set NODE_ENV=test&& prisma db init\"",
+    "db:init:prod": "cmd /c \"set NODE_ENV=production&& prisma db init\"",
+    "db:update:dev": "cmd /c \"set NODE_ENV=development&& prisma db update\"",
+    "db:update:test": "cmd /c \"set NODE_ENV=test&& prisma db update\"",
+    "db:update:prod": "cmd /c \"set NODE_ENV=production&& prisma db update\"",
+    "db:sync": "pnpm db:update:dev && pnpm db:update:test && pnpm db:update:prod"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
+    "@prisma/orm-postgres": "8.0.0-rc.18",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
+    "dotenv": "^18.0.8",
     "lucide-react": "^1.57.0",
     "next": "16.4.0",
     "proxy-agent": "^8.0.2",
@@ -30,6 +40,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
+    "prisma": "8.0.0-rc.23",
     "tailwindcss": "^4",
     "typescript": "^5"
   },

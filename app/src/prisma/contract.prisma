@@ -1,0 +1,15 @@
+// use prisma-8
+
+model Media {
+  id String @id @default(uuid())
+  name String
+  key String
+  url String
+  mime String
+  size Int
+  createdAt TimestamptzString @default(now()) @map("created_at")
+
+  @@unique([key])
+  @@index([key])
+  @@map("media")
+}

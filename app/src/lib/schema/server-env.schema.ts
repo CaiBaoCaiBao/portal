@@ -8,6 +8,8 @@ const serverEnvSchema = z.object({
     SecretKey: z.string(),
     Domain: z.string(),
     Bucket: z.string(),
+
+    DatabaseUrl: z.string(),
 }).transform((data) => ({
     app: {
         isPro: data.IsPro,
@@ -18,7 +20,10 @@ const serverEnvSchema = z.object({
         secretKey: data.SecretKey,
         domain: data.Domain,
         bucket: data.Bucket,
-    }
+    },
+    database: {
+        url: data.DatabaseUrl,
+    },
 }));
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
@@ -31,4 +36,6 @@ export const serverEnv = serverEnvSchema.parse({
     SecretKey: process.env.QINIU_SECRET_KEY,
     Domain: process.env.QINIU_DOMAIN,
     Bucket: process.env.QINIU_BUCKET,
+
+    DatabaseUrl: process.env.DATABASE_URL,
 });

@@ -3,8 +3,11 @@ import { useFileUpload } from "@/hooks/use-file-upload";
 import { FileUpload } from "@/components/file-upload";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { getUploadCredential } from "@/lib/actions/media.action";
-import { MediaService } from "@/lib/services/media.service";
+import {
+    getUploadCredential,
+    createMedia,
+} from "@/lib/actions/media.action";
+import { QiniuClient } from "@/lib/utils";
 export function FileUploadLab() {
     const [state, action] = useFileUpload({
         maxSize: 2 * 1024 * 1024,
@@ -13,8 +16,15 @@ export function FileUploadLab() {
             for (const item of files) {
                 if (!(item.file instanceof File)) continue;
                 const credential = await getUploadCredential(item.file.name);
-                const res = await MediaService.uploadToQiniu(item.file, credential);
-                action.updateFilePreview(item.id, res.url);
+                const res = await QiniuClient.uploadToQiniu({ file: item.file, credential });
+                await action.updateFilePreview(item.id, res.url);
+                await createMedia({
+                    url: res.url,
+                    name: item.file.name,
+                    key: res.key,
+                    mime: item.file.type,
+                    size: item.file.size,
+                });
             }
         },
     });

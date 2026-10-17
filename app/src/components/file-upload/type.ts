@@ -44,7 +44,7 @@ export type FileUploadAction = {
         ref: Ref<HTMLInputElement>
     },
     clearErrors: () => void;
-    updateFilePreview: (id: string, url: string) => void;
+    updateFilePreview: (id: string, url: string) => Promise<void>;
 }
 
 export type FileUploadOptions = {
