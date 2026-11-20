@@ -1,7 +1,7 @@
 import "server-only";
 
-import { serverEnvSchema } from "@/lib/schema/env/server-env.schema";
-import { deepClone, deepFreeze } from "@/utils";
+import { serverEnvSchema } from "@/schema/env/server-env.schema";
+import { deepClone, deepFreeze } from "@/lib";
 
 /** @description 服务器环境变量配置 */
 const serverEnv = serverEnvSchema.parse({

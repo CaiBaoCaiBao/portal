@@ -1,8 +1,8 @@
-import { clientEnvSchema } from "@/lib/schema/env/client-env.schema";
+import { clientEnvSchema } from "@/schema/env/client-env.schema";
 import {
     deepClone,
     deepFreeze,
-} from "@/utils";
+} from "@/lib";
 
 /** @description 客户端环境变量配置 */
 const clientEnv = clientEnvSchema.parse({
