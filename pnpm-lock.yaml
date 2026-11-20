@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@prisma/orm-family-sql':
+        specifier: 8.0.0-rc.24
+        version: 8.0.0-rc.24(@prisma/cli-engine@0.10.0(@prisma/management-api-sdk@1.80.0)(magicast@0.5.5))(magicast@0.5.5)(typanion@3.14.0)(typescript@5.9.3)
       '@prisma/orm-postgres':
         specifier: 8.0.0-rc.24
         version: 8.0.0-rc.24(@prisma/cli-engine@0.10.0(@prisma/management-api-sdk@1.80.0)(magicast@0.5.5))(magicast@0.5.5)(temporal-polyfill@1.0.8)(typanion@3.14.0)(typescript@5.9.3)
