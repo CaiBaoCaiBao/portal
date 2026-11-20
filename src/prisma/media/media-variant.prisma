@@ -1,0 +1,22 @@
+// use prisma-8
+
+model MediaVariant{
+    id String @id @onCreate(uuid(7))
+    fileId String
+    file   MediaFile @relation(fields: [fileId], references: [id])
+    purpose String
+    storageKey String @unique
+    url String
+    mime String
+    size Int
+    width Int?
+    height Int?
+    createdAt TimestamptzString @default(now())  @map("created_at")
+
+    @@unique([fileId, purpose])
+    @@map("media_variants")
+}
+
+// - Variant 跟的是 File 而不是 Asset。换版本后，旧 File 的 variant 仍旧留在旧版本上；新 File 重新出一套 variant
+// - 列表用 purpose = thumb，正文可用 preview 或者原文件
+// - fileId + purpose 应避免重复

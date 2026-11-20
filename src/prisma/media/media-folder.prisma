@@ -1,1 +1,17 @@
 // use prisma-8
+
+// 媒体文件夹
+model MediaFolder {
+    id String @id @onCreate(uuid(7))
+    name String @unique
+
+    createdAt TimestamptzString() @default(now()) @map("created_at")
+    updatedAt temporal.UpdatedAt @map("updated_at")
+
+    assets MediaAsset[]
+
+    @@map("media_folders")
+}
+
+// - 媒体资产通过 MediaAsset.folderId 挂进来，一个资产最多属于一个目录
+// - 删除目录前必须保证该目录下没有文件，否则抛出异常

@@ -1,0 +1,25 @@
+// use prisma-8
+
+model MediaAsset {
+    id String @id @onCreate(uuid(7))
+    folderId String? @map("folder_id")
+    folder MediaFolder? @relation(fields: [folderId], references: [id])
+
+    title String
+    description String?
+    kind String
+    status String
+
+    createdAt TimestamptzString() @default(now()) @map("created_at")
+    updatedAt temporal.UpdatedAt @map("updated_at")
+    
+    currentFileId String?
+    currentFile MediaFile? @relation("AssetCurrentFile",fields: [currentFileId], references: [id])
+    
+    files MediaFile[] @relation("MediaAssetFiles")
+
+    @@map("media_assets")
+}
+
+// - kind / status 用 Zod 收紧枚举
+// - folderId 可空，资产也可以不进任何目录

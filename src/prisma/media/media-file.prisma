@@ -1,0 +1,33 @@
+// use prisma-8
+
+model MediaFile {
+    id String @id @onCreate(uuid(7))
+
+    assetId String
+    asset MediaAsset @relation("MediaAssetFiles", fields: [assetId], references: [id])
+    currentFor MediaAsset[]
+    version Int @default(1)
+
+    originalName String @map("original_name")
+    storageKey String @map("storage_key") @unique
+    url String
+    checksum String
+    status String
+    size BigInt
+    width Int?
+    height Int?
+    durationMs Int? @map("duration_ms")
+
+    createdAt TimestamptzString() @default(now()) @map("created_at")
+
+    variants MediaVariant[]
+
+    @@unique([assetId,version])
+    @@index([storageKey])
+    @@map("media_files")
+}
+
+// - storageKey 全局唯一，替换文件后 storageKey 会更新
+// - 替换原图 = 新增一条 MediaFile，version + 1，再改 Asset 的 currentFileId。旧文件可留作回滚。
+// - currentFor 是 currentFileId 的反向；应用层应保证一个 File 最多被一个 Asset 选为当前
+// - status: uploading / ready / failed
