@@ -6,12 +6,25 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "shadcn": "pnpm dlx shadcn add",
+    "contract:emit": "prisma contract emit",
+    "db:init:dev": "cmd /c \"set NODE_ENV=development&& prisma db init\"",
+    "db:init:test": "cmd /c \"set NODE_ENV=test&& prisma db init\"",
+    "db:init:prod": "cmd /c \"set NODE_ENV=production&& prisma db init\"",
+    "db:update:dev": "cmd /c \"set NODE_ENV=development&& prisma db update\"",
+    "db:update:test": "cmd /c \"set NODE_ENV=test&& prisma db update\"",
+    "db:update:prod": "cmd /c \"set NODE_ENV=production&& prisma db update\"",
+    "db:init:all": "pnpm db:init:dev && pnpm db:init:test && pnpm db:init:prod",
+    "db:sync": "pnpm db:update:dev && pnpm db:update:test && pnpm db:update:prod"
   },
   "dependencies": {
+    "@prisma/orm-postgres": "8.0.0-rc.24",
+    "dotenv": "^18.0.10",
     "next": "16.4.6",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "4.3.3",
@@ -20,6 +33,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
+    "prisma": "8.0.0-rc.34",
     "tailwindcss": "4.3.3",
     "typescript": "^5"
   },
