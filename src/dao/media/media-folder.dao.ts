@@ -3,8 +3,15 @@ import "server-only";
 import { FieldInputTypes } from "@/prisma/contract";
 import { mapPrismaError } from "@/lib/server";
 import { db } from "@/prisma/db";
-import { PaginationQuery, OrderQuery } from "@/types/globals.type";
-import { mediaFolderListFields, MediaFolderColumns } from "@/types/media.type";
+import {
+    PaginationQuery,
+    OrderQuery
+} from "@/types/globals.type";
+import {
+    mediaFolderListFields,
+    MediaFolderListColumns,
+    MediaFolderDetailColumns
+} from "@/types/media.type";
 import { orderByField } from "@prisma/orm-family-sql/orm-client";
 
 type MediaFolderInputFields = FieldInputTypes["public"]["MediaFolder"];
@@ -46,7 +53,7 @@ export class MediaFolderDao {
         page: PaginationQuery,
         order: OrderQuery<MediaFolderOrder> = []
     ): Promise<{
-        rows: MediaFolderColumns[],
+        rows: MediaFolderListColumns[],
         total: number,
     }> {
         const filtered = db.orm.public.MediaFolder.where((folder, { fns }) => {
@@ -77,7 +84,7 @@ export class MediaFolderDao {
         }
     }
 
-    static async findById(id: string): Promise<MediaFolderColumns | null> {
+    static async findById(id: string): Promise<MediaFolderDetailColumns | null> {
         try {
             return await db.orm.public.MediaFolder
                 .whereUnique({ id })
@@ -88,7 +95,7 @@ export class MediaFolderDao {
         }
     }
 
-    static async findByName(name: string): Promise<MediaFolderColumns | null> {
+    static async findByName(name: string): Promise<MediaFolderDetailColumns | null> {
         try {
             return await db.orm.public.MediaFolder
                 .whereUnique({ name })
