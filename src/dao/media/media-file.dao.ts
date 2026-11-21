@@ -17,7 +17,7 @@ type MediaFileInput = Pick<
     "originalName" | "checksum" | "size" | "assetId" | "durationMs" | "height"
     | "status" | "storageKey" | "url" | "version" | "width"
 >;
-
+type MediaFileQuery = Pick<MediaFileInputFields, "assetId">;
 
 export class MediaFileDao {
     static async insert(
@@ -49,11 +49,16 @@ export class MediaFileDao {
         }
     }
 
-    static async query(page: PaginationQuery): Promise<{
-        rows: MediaFileListColumns[],
-        total: number
+    /** @description 查询媒体资产已上传的文件列表 */
+    static async query(
+        query: MediaFileQuery, page: PaginationQuery
+    ): Promise<{
+        rows: MediaFileListColumns[], total: number
     }> {
-        const filtered = db.orm.public.MediaFile;
+        const filtered = db.orm.public.MediaFile.where((file, { fns }) => fns.and(
+            file.assetId.eq(query.assetId),
+            file.status.eq("ready"),
+        ));
         try {
             const rows = await filtered
                 .orderBy([(file) => file.version.desc()])
