@@ -3,9 +3,13 @@ import "server-only";
 import { FieldInputTypes } from "@/prisma/contract";
 import { mapPrismaError } from "@/lib/server";
 import { db, type Tx } from "@/prisma/db";
-import { PaginationQuery, OrderQuery } from "@/types/globals.type";
-import { orderByField } from "@prisma/orm-family-sql/orm-client";
-import { mediaFileListFiles, MediaFileListColumns, mediaFileDetailFields, MediaFileDetailColumns } from "@/types/media.type";
+import { PaginationQuery } from "@/types/globals.type";
+import {
+    mediaFileListFiles,
+    MediaFileListColumns,
+    mediaFileDetailFields,
+    MediaFileDetailColumns
+} from "@/types/media.type";
 
 type MediaFileInputFields = FieldInputTypes["public"]["MediaFile"];
 type MediaFileInput = Pick<
