@@ -1,6 +1,4 @@
-const MODULE = ["MEDIA", "CONTENT"] as const;
-
-export type Module = (typeof MODULE)[number];
+export type Module = "MEDIA" | "CONTENT";
 
 export type Row<Model, Fields extends readonly (keyof Model)[]> =
     Pick<Model, Fields[number]>;
