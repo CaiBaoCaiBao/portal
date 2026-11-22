@@ -65,7 +65,7 @@ export class MediaAssetDao {
 
     static async query(
         query: MediaAssetQuery = {},
-        page: PaginationQuery,
+        page: PaginationQuery = { pageIndex: 0, pageSize: 10 },
         order: OrderQuery<MediaAssetOrder> = []
     ): Promise<{
         rows: MediaAssetListColumns[],
