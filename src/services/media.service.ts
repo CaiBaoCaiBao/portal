@@ -8,7 +8,7 @@ import {
     MediaFolderDTO,
     MediaFolderQueryDTO,
     mediaFolderOrderSchema,
-} from "@/schema/media/media-folder.schema";
+} from "@/schema/media";
 import {
     PaginationDTO,
     OrderDTO,
