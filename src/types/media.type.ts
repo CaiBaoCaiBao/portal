@@ -4,9 +4,11 @@ import { Row } from "./globals.type";
 
 type MediaFolderOutput = FieldOutputTypes["public"]["MediaFolder"];
 type MediaAssetOutput = FieldOutputTypes["public"]["MediaAsset"];
+type FileVersionOutput = FieldOutputTypes["public"]["FileVersion"];
 
 const folderColumns = columns<MediaFolderOutput>();
 const assetColumns = columns<MediaAssetOutput>();
+const fileVersionColumns = columns<FileVersionOutput>();
 
 export const mediaFolderListFields = folderColumns("id", "name");
 export const mediaFolderDetailFields = mediaFolderListFields;
@@ -17,10 +19,14 @@ export const mediaAssetDetailFields = assetColumns(
     "id", "title", "folderId", "createdAt", "currentVersionId",
     "description", "status", "kind"
 );
+export const fileVersionListFields = fileVersionColumns("id", "assetId", "fileId", "version", "createdAt");
+export const fileVersionDetailFields = fileVersionListFields;
 
 export type MediaFolderListColumns = Row<MediaFolderOutput, typeof mediaFolderListFields>;
 export type MediaFolderDetailColumns = Row<MediaFolderOutput, typeof mediaFolderDetailFields>;
 export type MediaAssetListColumns = Row<MediaAssetOutput, typeof mediaAssetListFields>;
 export type MediaAssetDetailColumns = Row<MediaAssetOutput, typeof mediaAssetDetailFields>;
+export type FileVersionListColumns = Row<FileVersionOutput, typeof fileVersionListFields>;
+export type FileVersionDetailColumns = Row<FileVersionOutput, typeof fileVersionDetailFields>;
 
 export type MediaFolderListVO = Row<MediaFolderOutput, typeof mediaFolderListFields>;

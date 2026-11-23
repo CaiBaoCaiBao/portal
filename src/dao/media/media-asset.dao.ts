@@ -70,25 +70,25 @@ export class MediaAssetDao {
 
     /** @description 分页动态查询媒体资产 */
     static async query(
-        query: MediaAssetQuery,
+        data: MediaAssetQuery,
         page: PaginationQuery,
         order: OrderQuery<MediaAssetOrder>
     ): Promise<{ rows: MediaAssetListColumns[], total: number }> {
         const filtered = db.orm.public.MediaAsset.where((asset, { fns }) => {
             const conditions = [];
-            conditions.push(asset.status.eq(query.status));
-            conditions.push(asset.folderId.eq(query.folderId));
-            if (query.title) {
-                conditions.push(asset.title.like(`%${query.title}%`));
+            conditions.push(asset.status.eq(data.status));
+            conditions.push(asset.folderId.eq(data.folderId));
+            if (data.title) {
+                conditions.push(asset.title.like(`%${data.title}%`));
             }
-            if (query.kind) {
-                conditions.push(asset.kind.eq(query.kind));
+            if (data.kind) {
+                conditions.push(asset.kind.eq(data.kind));
             }
-            if (query.createdFrom) {
-                conditions.push(asset.createdAt.gte(query.createdFrom));
+            if (data.createdFrom) {
+                conditions.push(asset.createdAt.gte(data.createdFrom));
             }
-            if (query.createdTo) {
-                conditions.push(asset.createdAt.lte(query.createdTo));
+            if (data.createdTo) {
+                conditions.push(asset.createdAt.lte(data.createdTo));
             }
             return conditions.length > 0 ? fns.and(...conditions) : asset.id.isNotNull();
         })
