@@ -8,6 +8,10 @@
       "model": "MediaAsset",
       "namespace": "public"
     },
+    "media_file_versions": {
+      "model": "FileVersion",
+      "namespace": "public"
+    },
     "media_files": {
       "model": "MediaFile",
       "namespace": "public"
@@ -25,6 +29,116 @@
     "namespaces": {
       "public": {
         "models": {
+          "FileVersion": {
+            "fields": {
+              "assetId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "fileId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "version": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "asset": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "assetId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "MediaAsset",
+                  "namespace": "public"
+                }
+              },
+              "currentFor": {
+                "cardinality": "1:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "currentVersionId"
+                  ]
+                },
+                "to": {
+                  "model": "MediaAsset",
+                  "namespace": "public"
+                }
+              },
+              "file": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "fileId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "MediaFile",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "assetId": {
+                  "column": "assetId"
+                },
+                "createdAt": {
+                  "column": "created_at"
+                },
+                "fileId": {
+                  "column": "fileId"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "version": {
+                  "column": "version"
+                }
+              },
+              "namespaceId": "public",
+              "table": "media_file_versions"
+            }
+          },
           "MediaAsset": {
             "fields": {
               "createdAt": {
@@ -34,7 +148,7 @@
                   "kind": "scalar"
                 }
               },
-              "currentFileId": {
+              "currentVersionId": {
                 "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
@@ -95,34 +209,19 @@
               }
             },
             "relations": {
-              "currentFile": {
+              "currentVersion": {
                 "cardinality": "N:1",
                 "nullable": true,
                 "on": {
                   "localFields": [
-                    "currentFileId"
+                    "currentVersionId"
                   ],
                   "targetFields": [
                     "id"
                   ]
                 },
                 "to": {
-                  "model": "MediaFile",
-                  "namespace": "public"
-                }
-              },
-              "files": {
-                "cardinality": "1:N",
-                "on": {
-                  "localFields": [
-                    "id"
-                  ],
-                  "targetFields": [
-                    "assetId"
-                  ]
-                },
-                "to": {
-                  "model": "MediaFile",
+                  "model": "FileVersion",
                   "namespace": "public"
                 }
               },
@@ -141,6 +240,21 @@
                   "model": "MediaFolder",
                   "namespace": "public"
                 }
+              },
+              "versions": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "assetId"
+                  ]
+                },
+                "to": {
+                  "model": "FileVersion",
+                  "namespace": "public"
+                }
               }
             },
             "storage": {
@@ -148,8 +262,8 @@
                 "createdAt": {
                   "column": "created_at"
                 },
-                "currentFileId": {
-                  "column": "currentFileId"
+                "currentVersionId": {
+                  "column": "currentVersionId"
                 },
                 "description": {
                   "column": "description"
@@ -179,13 +293,6 @@
           },
           "MediaFile": {
             "fields": {
-              "assetId": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
               "checksum": {
                 "nullable": false,
                 "type": {
@@ -215,6 +322,13 @@
                 }
               },
               "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "mimeType": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
@@ -256,13 +370,6 @@
                   "kind": "scalar"
                 }
               },
-              "version": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              },
               "width": {
                 "nullable": true,
                 "type": {
@@ -272,37 +379,6 @@
               }
             },
             "relations": {
-              "asset": {
-                "cardinality": "N:1",
-                "nullable": false,
-                "on": {
-                  "localFields": [
-                    "assetId"
-                  ],
-                  "targetFields": [
-                    "id"
-                  ]
-                },
-                "to": {
-                  "model": "MediaAsset",
-                  "namespace": "public"
-                }
-              },
-              "currentFor": {
-                "cardinality": "1:N",
-                "on": {
-                  "localFields": [
-                    "id"
-                  ],
-                  "targetFields": [
-                    "currentFileId"
-                  ]
-                },
-                "to": {
-                  "model": "MediaAsset",
-                  "namespace": "public"
-                }
-              },
               "variants": {
                 "cardinality": "1:N",
                 "on": {
@@ -317,13 +393,25 @@
                   "model": "MediaVariant",
                   "namespace": "public"
                 }
+              },
+              "versions": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "fileId"
+                  ]
+                },
+                "to": {
+                  "model": "FileVersion",
+                  "namespace": "public"
+                }
               }
             },
             "storage": {
               "fields": {
-                "assetId": {
-                  "column": "assetId"
-                },
                 "checksum": {
                   "column": "checksum"
                 },
@@ -339,6 +427,9 @@
                 "id": {
                   "column": "id"
                 },
+                "mimeType": {
+                  "column": "mime_type"
+                },
                 "originalName": {
                   "column": "original_name"
                 },
@@ -353,9 +444,6 @@
                 },
                 "url": {
                   "column": "url"
-                },
-                "version": {
-                  "column": "version"
                 },
                 "width": {
                   "column": "width"
@@ -583,7 +671,7 @@
                   },
                   "nullable": false
                 },
-                "currentFileId": {
+                "currentVersionId": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
                   "nullable": true
@@ -649,11 +737,13 @@
                 },
                 {
                   "index": {
-                    "name": "media_assets_currentFileId_idx_b7dd4f60"
+                    "unique": [
+                      "currentVersionId"
+                    ]
                   },
                   "source": {
                     "columns": [
-                      "currentFileId"
+                      "currentVersionId"
                     ],
                     "namespaceId": "public",
                     "tableName": "media_assets"
@@ -663,19 +753,11 @@
                       "id"
                     ],
                     "namespaceId": "public",
-                    "tableName": "media_files"
+                    "tableName": "media_file_versions"
                   }
                 }
               ],
               "indexes": [
-                {
-                  "columns": [
-                    "currentFileId"
-                  ],
-                  "name": "media_assets_currentFileId_idx_b7dd4f60",
-                  "prefix": "media_assets_currentFileId_idx",
-                  "unique": false
-                },
                 {
                   "columns": [
                     "folder_id"
@@ -690,15 +772,126 @@
                   "id"
                 ]
               },
-              "uniques": []
+              "uniques": [
+                {
+                  "columns": [
+                    "currentVersionId"
+                  ]
+                }
+              ]
             },
-            "media_files": {
+            "media_file_versions": {
               "columns": {
                 "assetId": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
                   "nullable": false
                 },
+                "created_at": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "dataType": "pg/timestamptz",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nullable": false
+                },
+                "fileId": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "version": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "kind": "literal",
+                    "value": 1
+                  },
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "index": {
+                    "name": "media_file_versions_assetId_idx_4ebe630a"
+                  },
+                  "source": {
+                    "columns": [
+                      "assetId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "media_file_versions"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "media_assets"
+                  }
+                },
+                {
+                  "index": {
+                    "name": "media_file_versions_fileId_idx_9a9e456b"
+                  },
+                  "source": {
+                    "columns": [
+                      "fileId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "media_file_versions"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "media_files"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "assetId"
+                  ],
+                  "name": "media_file_versions_assetId_idx_4ebe630a",
+                  "prefix": "media_file_versions_assetId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "assetId",
+                    "version"
+                  ],
+                  "name": "media_file_versions_assetId_version_idx_102ee5f6",
+                  "prefix": "media_file_versions_assetId_version_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "fileId"
+                  ],
+                  "name": "media_file_versions_fileId_idx_9a9e456b",
+                  "prefix": "media_file_versions_fileId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
+            "media_files": {
+              "columns": {
                 "checksum": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
@@ -728,6 +921,11 @@
                   "dataType": "pg/text",
                   "nullable": false
                 },
+                "mime_type": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
                 "original_name": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
@@ -753,52 +951,14 @@
                   "dataType": "pg/text",
                   "nullable": false
                 },
-                "version": {
-                  "codecId": "pg/int4@1",
-                  "dataType": "pg/int4",
-                  "default": {
-                    "kind": "literal",
-                    "value": 1
-                  },
-                  "nullable": false
-                },
                 "width": {
                   "codecId": "pg/int4@1",
                   "dataType": "pg/int4",
                   "nullable": true
                 }
               },
-              "foreignKeys": [
-                {
-                  "index": {
-                    "name": "media_files_assetId_idx_4ebe630a"
-                  },
-                  "source": {
-                    "columns": [
-                      "assetId"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "media_files"
-                  },
-                  "target": {
-                    "columns": [
-                      "id"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "media_assets"
-                  }
-                }
-              ],
-              "indexes": [
-                {
-                  "columns": [
-                    "assetId"
-                  ],
-                  "name": "media_files_assetId_idx_4ebe630a",
-                  "prefix": "media_files_assetId_idx",
-                  "unique": false
-                }
-              ],
+              "foreignKeys": [],
+              "indexes": [],
               "primaryKey": {
                 "columns": [
                   "id"
@@ -808,12 +968,6 @@
                 {
                   "columns": [
                     "storage_key"
-                  ]
-                },
-                {
-                  "columns": [
-                    "assetId",
-                    "version"
                   ]
                 }
               ]
@@ -976,10 +1130,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "bc54fcb53ba3855541f5f3de8b80d771bb648fd3c305f441e8f4e66b68848b32"
+    "storageHash": "bae7b3cad3ca29ce990a19dc94dcbca52abbe19a7017a4a4c3144264c6102e08"
   },
   "execution": {
-    "executionHash": "524871dbd186045133e41a54e8ffacdf8949adb820f1f1d9717864ea4c4649f5",
+    "executionHash": "b68d328e697e8eae50378a077684f3f6ac052d9318401ac3f82e72b5e9b4ceae",
     "mutations": {
       "defaults": [
         {
@@ -1011,6 +1165,17 @@
           "ref": {
             "entry": "media_assets",
             "field": "updated_at",
+            "namespace": "public"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv7",
+            "kind": "generator"
+          },
+          "ref": {
+            "entry": "media_file_versions",
+            "field": "id",
             "namespace": "public"
           }
         },

@@ -1,0 +1,18 @@
+// use prisma-8
+
+model FileVersion {
+    id String @id @onCreate(uuid(7))
+    assetId String
+    asset MediaAsset @relation("AssetVersions",fields: [assetId],references: [id])
+    currentFor MediaAsset? @relation("AssetCurrentVersion")
+    version Int @default(1)
+
+    fileId String
+    file MediaFile @relation(fields: [fileId], references: [id])
+
+    createdAt TimestamptzString() @default(now()) @map("created_at")
+
+    @@index([assetId,version])
+    @@index([fileId])
+    @@map("media_file_versions")
+}

@@ -12,3 +12,5 @@ export {
 } from "./app-error";
 
 export { mapZodError } from "./map-zod-error";
+
+export { QiniuError } from "./qiniu-error";

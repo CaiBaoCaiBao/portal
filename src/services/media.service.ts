@@ -1,25 +1,23 @@
 import "server-only";
 
 import {
-    MediaAssetDao,
-    MediaFolderDao
+    MediaFolderDao,
 } from "@/dao";
 import {
-    MediaFolderDTO,
-    MediaFolderQueryDTO,
+    type MediaFolderDTO,
+    type MediaFolderQueryDTO,
     mediaFolderOrderSchema,
 } from "@/schema/media";
 import {
-    PaginationDTO,
-    OrderDTO,
-    IdQueryDTO
+    type PaginationDTO,
+    type OrderDTO,
+    type IdQueryDTO
 } from "@/schema/globals.schema";
 import {
-    BadRequestError,
     ConflictError,
-    NotFoundError
+    NotFoundError,
 } from "@/lib";
-import { MediaFolderListVO } from "@/types/media.type";
+import { type MediaFolderListVO } from "@/types/media.type";
 
 export class MediaService {
 
@@ -48,8 +46,8 @@ export class MediaService {
     static async deleteFolder(id: IdQueryDTO) {
         const folder = await MediaFolderDao.findById(id);
         if (!folder) throw new NotFoundError("MEDIA", "Folder not found");
-        const assets = await MediaAssetDao.query({ folderId: id });
-        if (assets.total > 0) throw new BadRequestError("MEDIA", "Folder is not empty");
+        // const assets = await MediaAssetDao.query({ folderId: id });
+        // if (assets.total > 0) throw new BadRequestError("MEDIA", "Folder is not empty");
         await MediaFolderDao.delete(id);
     }
 

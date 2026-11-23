@@ -13,10 +13,10 @@ model MediaAsset {
     createdAt TimestamptzString() @default(now()) @map("created_at")
     updatedAt temporal.UpdatedAt @map("updated_at")
     
-    currentFileId String?
-    currentFile MediaFile? @relation("AssetCurrentFile",fields: [currentFileId], references: [id])
+    currentVersionId String? @unique
+    currentVersion FileVersion? @relation("AssetCurrentVersion",fields: [currentVersionId], references: [id])
     
-    files MediaFile[] @relation("MediaAssetFiles")
+    versions FileVersion[] @relation("AssetVersions")
 
     @@map("media_assets")
 }

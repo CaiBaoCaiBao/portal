@@ -3,15 +3,11 @@
 model MediaFile {
     id String @id @onCreate(uuid(7))
 
-    assetId String
-    asset MediaAsset @relation("MediaAssetFiles", fields: [assetId], references: [id])
-    currentFor MediaAsset[]
-    version Int @default(1)
-
     originalName String @map("original_name")
     storageKey String @map("storage_key") @unique
     url String
     checksum String
+    mimeType String @map("mime_type")
     status String
     size BigInt
     width Int?
@@ -20,9 +16,9 @@ model MediaFile {
 
     createdAt TimestamptzString() @default(now()) @map("created_at")
 
+    versions FileVersion[]
     variants MediaVariant[]
-
-    @@unique([assetId,version])
+    
     @@index([storageKey])
     @@map("media_files")
 }
