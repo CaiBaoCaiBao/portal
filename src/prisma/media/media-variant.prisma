@@ -8,6 +8,7 @@ model MediaVariant{
     storageKey String @unique
     url String
     mime String
+    status String
     size Int
     width Int?
     height Int?

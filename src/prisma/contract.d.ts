@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'bae7b3cad3ca29ce990a19dc94dcbca52abbe19a7017a4a4c3144264c6102e08'>;
+  StorageHashBase<'a183df1234e3139540d1be61634d79f76eed148b4376f097f137de04aa3c43ab'>;
 export type ExecutionHash =
   ExecutionHashBase<'b68d328e697e8eae50378a077684f3f6ac052d9318401ac3f82e72b5e9b4ceae'>;
 export type ProfileHash =
@@ -368,6 +368,7 @@ export namespace Models {
     mime: FieldOutputTypes['public']['MediaVariant']['mime'];
     purpose: FieldOutputTypes['public']['MediaVariant']['purpose'];
     size: FieldOutputTypes['public']['MediaVariant']['size'];
+    status: FieldOutputTypes['public']['MediaVariant']['status'];
     storageKey: FieldOutputTypes['public']['MediaVariant']['storageKey'];
     url: FieldOutputTypes['public']['MediaVariant']['url'];
     width: FieldOutputTypes['public']['MediaVariant']['width'];
@@ -744,6 +745,12 @@ type ContractBase = Omit<
                 readonly size: {
                   readonly dataType: 'pg/int4';
                   readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly status: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -1185,6 +1192,10 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
+              readonly status: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly storageKey: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
@@ -1223,6 +1234,7 @@ type ContractBase = Omit<
                 readonly mime: { readonly column: 'mime' };
                 readonly purpose: { readonly column: 'purpose' };
                 readonly size: { readonly column: 'size' };
+                readonly status: { readonly column: 'status' };
                 readonly storageKey: { readonly column: 'storageKey' };
                 readonly url: { readonly column: 'url' };
                 readonly width: { readonly column: 'width' };
