@@ -6,7 +6,7 @@ model MediaFile {
     originalName String @map("original_name")
     storageKey String @map("storage_key") @unique
     url String
-    checksum String
+    checksum String @unique
     mimeType String @map("mime_type")
     status String
     size BigInt

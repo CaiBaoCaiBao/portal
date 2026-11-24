@@ -979,6 +979,11 @@
                   "columns": [
                     "storage_key"
                   ]
+                },
+                {
+                  "columns": [
+                    "checksum"
+                  ]
                 }
               ]
             },
@@ -1145,7 +1150,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "a183df1234e3139540d1be61634d79f76eed148b4376f097f137de04aa3c43ab"
+    "storageHash": "87c8791388c8816c34001a8faac2e4ea60d1a85ab371927bec6d58af002d3f6d"
   },
   "execution": {
     "executionHash": "b68d328e697e8eae50378a077684f3f6ac052d9318401ac3f82e72b5e9b4ceae",
