@@ -6,11 +6,13 @@ type MediaFolderOutput = FieldOutputTypes["public"]["MediaFolder"];
 type MediaAssetOutput = FieldOutputTypes["public"]["MediaAsset"];
 type FileVersionOutput = FieldOutputTypes["public"]["FileVersion"];
 type MediaFileOutput = FieldOutputTypes["public"]["MediaFile"];
+type MediaVariantOutput = FieldOutputTypes["public"]["MediaVariant"];
 
 const folderColumns = columns<MediaFolderOutput>();
 const assetColumns = columns<MediaAssetOutput>();
 const fileVersionColumns = columns<FileVersionOutput>();
 const fileColumns = columns<MediaFileOutput>();
+const variantColumns = columns<MediaVariantOutput>();
 
 export const mediaFolderListFields = folderColumns("id", "name");
 export const mediaFolderDetailFields = mediaFolderListFields;
@@ -36,6 +38,18 @@ export const mediaFileDetailFields = fileColumns(
     "durationMs",
     "status"
 );
+export const variantListFields = variantColumns(
+    "id",
+    "fileId",
+    "height",
+    "width",
+    "purpose",
+    "mime",
+    "size",
+    "status",
+    "storageKey",
+    "url",
+);
 
 export type MediaFolderListColumns = Row<MediaFolderOutput, typeof mediaFolderListFields>;
 export type MediaFolderDetailColumns = Row<MediaFolderOutput, typeof mediaFolderDetailFields>;
@@ -44,5 +58,6 @@ export type MediaAssetDetailColumns = Row<MediaAssetOutput, typeof mediaAssetDet
 export type FileVersionListColumns = Row<FileVersionOutput, typeof fileVersionListFields>;
 export type FileVersionDetailColumns = Row<FileVersionOutput, typeof fileVersionDetailFields>;
 export type MediaFileDetailColumns = Row<MediaFileOutput, typeof mediaFileDetailFields>;
+export type MediaVariantListColumns = Row<MediaVariantOutput, typeof variantListFields>;
 
 export type MediaFolderListVO = Row<MediaFolderOutput, typeof mediaFolderListFields>;
