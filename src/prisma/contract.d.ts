@@ -23,9 +23,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'87c8791388c8816c34001a8faac2e4ea60d1a85ab371927bec6d58af002d3f6d'>;
+  StorageHashBase<'b429cf843dfb16fde4b314e7b6071a69a038f1b45f461ed5459ffcd12998360c'>;
 export type ExecutionHash =
-  ExecutionHashBase<'b68d328e697e8eae50378a077684f3f6ac052d9318401ac3f82e72b5e9b4ceae'>;
+  ExecutionHashBase<'8759b9210c4b71043fc0787994b5058f94aff804ba2781797c3c98c0f9d5738d'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -309,12 +309,12 @@ export type StorageColumnInputTypes = ColumnTypesFromStorage<
 >;
 
 export namespace Models {
-  export type public_FileVersion = {
-    assetId: FieldOutputTypes['public']['FileVersion']['assetId'];
-    createdAt: FieldOutputTypes['public']['FileVersion']['createdAt'];
-    fileId: FieldOutputTypes['public']['FileVersion']['fileId'];
-    id: FieldOutputTypes['public']['FileVersion']['id'];
-    version: FieldOutputTypes['public']['FileVersion']['version'];
+  export type public_AssetVersion = {
+    assetId: FieldOutputTypes['public']['AssetVersion']['assetId'];
+    createdAt: FieldOutputTypes['public']['AssetVersion']['createdAt'];
+    fileId: FieldOutputTypes['public']['AssetVersion']['fileId'];
+    id: FieldOutputTypes['public']['AssetVersion']['id'];
+    version: FieldOutputTypes['public']['AssetVersion']['version'];
     asset: public_MediaAsset;
     currentFor: public_MediaAsset | null;
     file: public_MediaFile;
@@ -330,9 +330,9 @@ export namespace Models {
     status: FieldOutputTypes['public']['MediaAsset']['status'];
     title: FieldOutputTypes['public']['MediaAsset']['title'];
     updatedAt: FieldOutputTypes['public']['MediaAsset']['updatedAt'];
-    currentVersion: public_FileVersion | null;
+    currentVersion: public_AssetVersion | null;
     folder: public_MediaFolder | null;
-    versions: public_FileVersion[];
+    versions: public_AssetVersion[];
     readonly [RelationKeys]?: 'currentVersion' | 'folder' | 'versions';
   };
   export type public_MediaFile = {
@@ -346,10 +346,11 @@ export namespace Models {
     size: FieldOutputTypes['public']['MediaFile']['size'];
     status: FieldOutputTypes['public']['MediaFile']['status'];
     storageKey: FieldOutputTypes['public']['MediaFile']['storageKey'];
+    updatedAt: FieldOutputTypes['public']['MediaFile']['updatedAt'];
     url: FieldOutputTypes['public']['MediaFile']['url'];
     width: FieldOutputTypes['public']['MediaFile']['width'];
     variants: public_MediaVariant[];
-    versions: public_FileVersion[];
+    versions: public_AssetVersion[];
     readonly [RelationKeys]?: 'variants' | 'versions';
   };
   export type public_MediaFolder = {
@@ -379,7 +380,7 @@ export namespace Models {
 
 export declare const models: {
   public: {
-    FileVersion: Models.public_FileVersion;
+    AssetVersion: Models.public_AssetVersion;
     MediaAsset: Models.public_MediaAsset;
     MediaFile: Models.public_MediaFile;
     MediaFolder: Models.public_MediaFolder;
@@ -405,6 +406,93 @@ type ContractBase = Omit<
         readonly kind: 'postgres-schema';
         readonly entries: {
           readonly table: {
+            readonly media_asset_versions: {
+              columns: {
+                readonly assetId: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly created_at: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly many: false;
+                };
+                readonly fileId: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly id: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly version: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/int4@1', 1>;
+                  };
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [];
+              indexes: readonly [
+                {
+                  readonly name: 'media_asset_versions_assetId_idx_4ebe630a';
+                  readonly prefix: 'media_asset_versions_assetId_idx';
+                  readonly columns: readonly ['assetId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'media_asset_versions_assetId_version_idx_102ee5f6';
+                  readonly prefix: 'media_asset_versions_assetId_version_idx';
+                  readonly columns: readonly ['assetId', 'version'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'media_asset_versions_fileId_idx_9a9e456b';
+                  readonly prefix: 'media_asset_versions_fileId_idx';
+                  readonly columns: readonly ['fileId'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'media_asset_versions';
+                    readonly columns: readonly ['assetId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'media_assets';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'media_asset_versions';
+                    readonly columns: readonly ['fileId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'media_files';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
+            };
             readonly media_assets: {
               columns: {
                 readonly created_at: {
@@ -495,94 +583,7 @@ type ContractBase = Omit<
                   };
                   readonly target: {
                     readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'media_file_versions';
-                    readonly columns: readonly ['id'];
-                  };
-                },
-              ];
-            };
-            readonly media_file_versions: {
-              columns: {
-                readonly assetId: {
-                  readonly dataType: 'pg/text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: false;
-                  readonly many: false;
-                };
-                readonly created_at: {
-                  readonly dataType: 'pg/timestamptz';
-                  readonly codecId: 'pg/timestamptz-string@1';
-                  readonly nullable: false;
-                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
-                  readonly many: false;
-                };
-                readonly fileId: {
-                  readonly dataType: 'pg/text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: false;
-                  readonly many: false;
-                };
-                readonly id: {
-                  readonly dataType: 'pg/text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: false;
-                  readonly many: false;
-                };
-                readonly version: {
-                  readonly dataType: 'pg/int4';
-                  readonly codecId: 'pg/int4@1';
-                  readonly nullable: false;
-                  readonly default: {
-                    readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/int4@1', 1>;
-                  };
-                  readonly many: false;
-                };
-              };
-              primaryKey: { readonly columns: readonly ['id'] };
-              uniques: readonly [];
-              indexes: readonly [
-                {
-                  readonly name: 'media_file_versions_assetId_idx_4ebe630a';
-                  readonly prefix: 'media_file_versions_assetId_idx';
-                  readonly columns: readonly ['assetId'];
-                  readonly unique: false;
-                },
-                {
-                  readonly name: 'media_file_versions_assetId_version_idx_102ee5f6';
-                  readonly prefix: 'media_file_versions_assetId_version_idx';
-                  readonly columns: readonly ['assetId', 'version'];
-                  readonly unique: false;
-                },
-                {
-                  readonly name: 'media_file_versions_fileId_idx_9a9e456b';
-                  readonly prefix: 'media_file_versions_fileId_idx';
-                  readonly columns: readonly ['fileId'];
-                  readonly unique: false;
-                },
-              ];
-              foreignKeys: readonly [
-                {
-                  readonly source: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'media_file_versions';
-                    readonly columns: readonly ['assetId'];
-                  };
-                  readonly target: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'media_assets';
-                    readonly columns: readonly ['id'];
-                  };
-                },
-                {
-                  readonly source: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'media_file_versions';
-                    readonly columns: readonly ['fileId'];
-                  };
-                  readonly target: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'media_files';
+                    readonly tableName: 'media_asset_versions';
                     readonly columns: readonly ['id'];
                   };
                 },
@@ -649,6 +650,13 @@ type ContractBase = Omit<
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
                   readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly updated_at: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly precision: 3 };
                   readonly many: false;
                 };
                 readonly url: {
@@ -815,13 +823,13 @@ type ContractBase = Omit<
   readonly target: 'postgres';
   readonly targetFamily: 'sql';
   readonly roots: {
+    readonly media_asset_versions: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'AssetVersion';
+    };
     readonly media_assets: {
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'MediaAsset';
-    };
-    readonly media_file_versions: {
-      readonly namespace: 'public' & NamespaceId;
-      readonly model: 'FileVersion';
     };
     readonly media_files: {
       readonly namespace: 'public' & NamespaceId;
@@ -840,7 +848,7 @@ type ContractBase = Omit<
     readonly namespaces: {
       readonly public: {
         readonly models: {
-          readonly FileVersion: {
+          readonly AssetVersion: {
             readonly fields: {
               readonly assetId: {
                 readonly nullable: false;
@@ -905,7 +913,7 @@ type ContractBase = Omit<
               };
             };
             readonly storage: {
-              readonly table: 'media_file_versions';
+              readonly table: 'media_asset_versions';
               readonly namespaceId: 'public';
               readonly fields: {
                 readonly assetId: { readonly column: 'assetId' };
@@ -966,7 +974,7 @@ type ContractBase = Omit<
               readonly currentVersion: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'FileVersion';
+                  readonly model: 'AssetVersion';
                 };
                 readonly cardinality: 'N:1';
                 readonly nullable: true;
@@ -990,7 +998,7 @@ type ContractBase = Omit<
               readonly versions: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'FileVersion';
+                  readonly model: 'AssetVersion';
                 };
                 readonly cardinality: '1:N';
                 readonly on: {
@@ -1060,6 +1068,14 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly updatedAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
               readonly url: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
@@ -1084,7 +1100,7 @@ type ContractBase = Omit<
               readonly versions: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'FileVersion';
+                  readonly model: 'AssetVersion';
                 };
                 readonly cardinality: '1:N';
                 readonly on: {
@@ -1107,6 +1123,7 @@ type ContractBase = Omit<
                 readonly size: { readonly column: 'size' };
                 readonly status: { readonly column: 'status' };
                 readonly storageKey: { readonly column: 'storage_key' };
+                readonly updatedAt: { readonly column: 'updated_at' };
                 readonly url: { readonly column: 'url' };
                 readonly width: { readonly column: 'width' };
               };
@@ -1284,6 +1301,14 @@ type ContractBase = Omit<
         {
           readonly onCreate: { readonly id: 'uuidv7'; readonly kind: 'generator' };
           readonly ref: {
+            readonly entry: 'media_asset_versions';
+            readonly field: 'id';
+            readonly namespace: 'public';
+          };
+        },
+        {
+          readonly onCreate: { readonly id: 'uuidv7'; readonly kind: 'generator' };
+          readonly ref: {
             readonly entry: 'media_assets';
             readonly field: 'id';
             readonly namespace: 'public';
@@ -1309,16 +1334,25 @@ type ContractBase = Omit<
         {
           readonly onCreate: { readonly id: 'uuidv7'; readonly kind: 'generator' };
           readonly ref: {
-            readonly entry: 'media_file_versions';
+            readonly entry: 'media_files';
             readonly field: 'id';
             readonly namespace: 'public';
           };
         },
         {
-          readonly onCreate: { readonly id: 'uuidv7'; readonly kind: 'generator' };
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
+          readonly onUpdate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
           readonly ref: {
             readonly entry: 'media_files';
-            readonly field: 'id';
+            readonly field: 'updated_at';
             readonly namespace: 'public';
           };
         },

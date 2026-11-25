@@ -14,9 +14,9 @@ model MediaAsset {
     updatedAt temporal.UpdatedAt @map("updated_at")
     
     currentVersionId String? @unique
-    currentVersion FileVersion? @relation("AssetCurrentVersion",fields: [currentVersionId], references: [id])
+    currentVersion AssetVersion? @relation("AssetCurrentVersion",fields: [currentVersionId], references: [id])
     
-    versions FileVersion[] @relation("AssetVersions")
+    versions AssetVersion[] @relation("AssetVersions")
 
     @@map("media_assets")
 }

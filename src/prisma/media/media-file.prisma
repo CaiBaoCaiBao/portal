@@ -15,8 +15,9 @@ model MediaFile {
     durationMs Int? @map("duration_ms")
 
     createdAt TimestamptzString() @default(now()) @map("created_at")
+    updatedAt temporal.UpdatedAt @map("updated_at")
 
-    versions FileVersion[]
+    versions AssetVersion[]
     variants MediaVariant[]
     
     @@index([storageKey])

@@ -1,6 +1,6 @@
 // use prisma-8
 
-model FileVersion {
+model AssetVersion {
     id String @id @onCreate(uuid(7))
     assetId String
     asset MediaAsset @relation("AssetVersions",fields: [assetId],references: [id])
@@ -14,5 +14,5 @@ model FileVersion {
 
     @@index([assetId,version])
     @@index([fileId])
-    @@map("media_file_versions")
+    @@map("media_asset_versions")
 }

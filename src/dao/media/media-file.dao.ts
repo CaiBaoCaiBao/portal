@@ -12,7 +12,7 @@ type MediaFileInputFields = FieldInputTypes["public"]["MediaFile"];
 export type MediaFileInput = Pick<
     MediaFileInputFields,
     "originalName" | "checksum" | "mimeType" | "size" | "status" | "storageKey"
-    | "url" | "width" | "height" | "durationMs"
+    | "url" | "width" | "height" | "durationMs" | "updatedAt"
 >;
 
 export class MediaFileDao {
@@ -74,7 +74,7 @@ export class MediaFileDao {
             throw mapPrismaError(error, "MEDIA");
         }
     }
-    
+
     /** @description 根据 checksum 查询媒体文件记录 */
     static async findByChecksum(checksum: string): Promise<MediaFileDetailColumns | null> {
         try {
