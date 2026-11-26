@@ -25,7 +25,7 @@ export type MediaAssetInput = Pick<
 export type MediaAssetQuery = {
     readonly folderId: string | null;
     readonly title: string | undefined;
-    readonly status: string;
+    readonly status: string | undefined;
     readonly kind: string | undefined;
     readonly createdFrom: string | undefined;
     readonly createdTo: string | undefined;
@@ -76,7 +76,6 @@ export class MediaAssetDao {
     ): Promise<{ rows: MediaAssetListColumns[], total: number }> {
         const filtered = db.orm.public.MediaAsset.where((asset, { fns }) => {
             const conditions = [];
-            conditions.push(asset.status.eq(data.status));
             conditions.push(asset.folderId.eq(data.folderId));
             if (data.title) {
                 conditions.push(asset.title.like(`%${data.title}%`));
@@ -89,6 +88,9 @@ export class MediaAssetDao {
             }
             if (data.createdTo) {
                 conditions.push(asset.createdAt.lte(data.createdTo));
+            }
+            if (data.status) {
+                conditions.push(asset.status.eq(data.status));
             }
             return conditions.length > 0 ? fns.and(...conditions) : asset.id.isNotNull();
         })

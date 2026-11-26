@@ -1,7 +1,5 @@
 # Portal
 
-![JuntL](https://github-readme-stats.vercel.app/api/top-langs/?username=CaiBaoCaiBao)
-
 ## 简述
 
 Portal 是 JuntL 的门户站点，用于内容、个人主页的展示以及对站点资源进行维护。
@@ -14,7 +12,17 @@ Portal 是 JuntL 的门户站点，用于内容、个人主页的展示以及对
 
 以下是该项目正在/计划实施的模块和功能：
 
-- 数字资产模块
+- 数字资产模块 ![Dev](https://img.shields.io/badge/Dev-316192)
+  - [x] 创建媒体目录 ![2026-11-22](https://img.shields.io/badge/Complete-2026--11--22-green)
+  - [x] 删除媒体目录 ![2026-11-22](https://img.shields.io/badge/Complete-2026--11--22-green)
+  - [x] 修改媒体目录 ![2026-11-22](https://img.shields.io/badge/Complete-2026--11--22-green)
+  - [x] 动态分页查询媒体目录 ![2026-11-22](https://img.shields.io/badge/Complete-2026--11--22-green)
+  - [x] 创建媒体资产 ![2026-11-26](https://img.shields.io/badge/Complete-2026--11--26-green)
+  - [x] 增加版本文件 ![2026-11-26](https://img.shields.io/badge/Complete-2026--11--26-green)
+  - [x] 切换资产版本 ![2026-11-26](https://img.shields.io/badge/Complete-2026--11--26-green)
+  - [ ] 更新媒体资产信息
+  - [ ] 删除媒体资产
+  - [ ] 动态分页查询媒体资产
 - 内容管理模块
 - 页面管理模块
 
@@ -41,6 +49,7 @@ pnpm install
 4. 构建数据库表 `pnpm exec prisma db update`
 
 项目运行
+
 ```
 pnpm dev
 ```

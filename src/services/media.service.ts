@@ -366,8 +366,19 @@ export class MediaService {
     static async deleteFolder(id: IdQueryDTO) {
         const folder = await MediaFolderDao.findById(id);
         if (!folder) throw new NotFoundError("MEDIA", "Folder not found");
-        // const assets = await MediaAssetDao.query({ folderId: id });
-        // if (assets.total > 0) throw new BadRequestError("MEDIA", "Folder is not empty");
+        const assets = await MediaAssetDao.query(
+            {
+                folderId: id,
+                title: void 0,
+                status: void 0,
+                kind: void 0,
+                createdFrom: void 0,
+                createdTo: void 0,
+            },
+            { pageIndex: 0, pageSize: 1 },
+            [],
+        );
+        if (assets.total > 0) throw new BadRequestError("MEDIA", "Folder is not empty");
         await MediaFolderDao.delete(id);
     }
 
