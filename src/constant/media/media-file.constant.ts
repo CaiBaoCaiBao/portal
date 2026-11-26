@@ -1,0 +1,1 @@
+export const MEDIA_FILE_STATUS = ["uploading", "ready", "failed"] as const;

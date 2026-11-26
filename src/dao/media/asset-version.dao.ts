@@ -61,7 +61,7 @@ export class AssetVersionDao {
     static async query(data: AssetVersionQuery): Promise<AssetVersionListColumns[]> {
         try {
             return await db.orm.public.AssetVersion
-                .where({ id: data.assetId })
+                .where({ assetId: data.assetId })
                 .select(...assetVersionListFields)
                 .all();
         } catch (error) {

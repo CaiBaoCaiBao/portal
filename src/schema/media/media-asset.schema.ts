@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { MEDIA_ASSET_STATUS } from "@/constant/media/media-asset.constant";
+import { MEDIA_FILE_STATUS } from "@/constant/media/media-file.constant";
 
 export const mediaAssetSchema = z.object({
     title: z.string().trim().min(1, "Asset title is required"),
@@ -24,5 +25,26 @@ export const mediaAssetSchema = z.object({
     type: z.string().trim().min(1, "Asset type is required"),
 });
 
+export const mediaAssetCallbackSchema = z.object({
+    assetId: z.uuidv7(),
+    fileId: z.uuidv7(),
+    size: z.preprocess((val) => Number(val), z.number().min(0, "Callback size must be greater than 0")),
+    qiniuSuccess: z.boolean(),
+});
+
+export const mediaAssetAddVersionSchema = z.object({
+    assetId: z.uuidv7(),
+    etag: z.string().trim().min(1, "Asset etag is required"),
+    currentVersionId: z.uuidv7(),
+    status: z.enum(MEDIA_FILE_STATUS).default("uploading"),
+    storageKey: z.string().trim().min(1, "Asset storage key is required"),
+})
+
 export type MediaAssetForm = z.input<typeof mediaAssetSchema>;
 export type MediaAssetDTO = z.output<typeof mediaAssetSchema>;
+
+export type MediaAssetCallbackForm = z.input<typeof mediaAssetCallbackSchema>;
+export type MediaAssetCallbackDTO = z.output<typeof mediaAssetCallbackSchema>;
+
+export type MediaAssetAddVersionForm = z.input<typeof mediaAssetAddVersionSchema>;
+export type MediaAssetAddVersionDTO = z.output<typeof mediaAssetAddVersionSchema>;
