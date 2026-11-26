@@ -15,6 +15,7 @@ import {
     type MediaAssetDTO,
     mediaFolderOrderSchema,
     AddFilECallbackDTO,
+    type AssetVersionDTO,
 } from "@/schema/media";
 import {
     type PaginationDTO,
@@ -171,7 +172,7 @@ export class MediaService {
     // ========================================================================
     // ========================== FILE SERVICES ===============================
     // ========================================================================
-    
+
     /** @description 添加媒体文件 */
     static async addFile(dto: AddFileDTO): Promise<{
         fileId: string,
@@ -323,8 +324,22 @@ export class MediaService {
     }
 
     // ========================================================================
-    // ========================== VARIANT SERVICES ===============================
+    // ========================== VERSION SERVICES ============================
     // ========================================================================
+
+    /** @description 切换媒体资产版本 */
+    static async changeVersion(dto: AssetVersionDTO) {
+        const asset = await MediaAssetDao.findById(dto.assetId);
+        if (!asset) throw new NotFoundError("MEDIA", "Asset is not found");
+        const targetVersion = await AssetVersionDao.findById(dto.targetVersionId);
+        if (!targetVersion) throw new NotFoundError("MEDIA", "Target version is not found");
+        if (targetVersion.assetId !== dto.assetId)
+            throw new BadRequestError("MEDIA", "Target version does not belong to this asset");
+        if (asset.currentVersionId === dto.targetVersionId) return;
+        await MediaAssetDao.update(dto.assetId, {
+            currentVersionId: dto.targetVersionId,
+        });
+    }
 
     // ========================================================================
     // ========================== FOLDER SERVICES =============================
