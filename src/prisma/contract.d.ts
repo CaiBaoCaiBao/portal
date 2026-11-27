@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'b429cf843dfb16fde4b314e7b6071a69a038f1b45f461ed5459ffcd12998360c'>;
+  StorageHashBase<'a9dbb6c1c7c25cbdfcea1677586258002677580349274ad0f0eefb4ec25c453c'>;
 export type ExecutionHash =
   ExecutionHashBase<'8759b9210c4b71043fc0787994b5058f94aff804ba2781797c3c98c0f9d5738d'>;
 export type ProfileHash =
@@ -327,13 +327,15 @@ export namespace Models {
     folderId: FieldOutputTypes['public']['MediaAsset']['folderId'];
     id: FieldOutputTypes['public']['MediaAsset']['id'];
     kind: FieldOutputTypes['public']['MediaAsset']['kind'];
+    pendingFileId: FieldOutputTypes['public']['MediaAsset']['pendingFileId'];
     status: FieldOutputTypes['public']['MediaAsset']['status'];
     title: FieldOutputTypes['public']['MediaAsset']['title'];
     updatedAt: FieldOutputTypes['public']['MediaAsset']['updatedAt'];
     currentVersion: public_AssetVersion | null;
     folder: public_MediaFolder | null;
+    pendingFile: public_MediaFile | null;
     versions: public_AssetVersion[];
-    readonly [RelationKeys]?: 'currentVersion' | 'folder' | 'versions';
+    readonly [RelationKeys]?: 'currentVersion' | 'folder' | 'pendingFile' | 'versions';
   };
   export type public_MediaFile = {
     checksum: FieldOutputTypes['public']['MediaFile']['checksum'];
@@ -349,9 +351,10 @@ export namespace Models {
     updatedAt: FieldOutputTypes['public']['MediaFile']['updatedAt'];
     url: FieldOutputTypes['public']['MediaFile']['url'];
     width: FieldOutputTypes['public']['MediaFile']['width'];
+    pendingAssets: public_MediaAsset[];
     variants: public_MediaVariant[];
     versions: public_AssetVersion[];
-    readonly [RelationKeys]?: 'variants' | 'versions';
+    readonly [RelationKeys]?: 'pendingAssets' | 'variants' | 'versions';
   };
   export type public_MediaFolder = {
     createdAt: FieldOutputTypes['public']['MediaFolder']['createdAt'];
@@ -532,6 +535,12 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly many: false;
                 };
+                readonly pending_file_id: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
                 readonly status: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
@@ -561,6 +570,12 @@ type ContractBase = Omit<
                   readonly columns: readonly ['folder_id'];
                   readonly unique: false;
                 },
+                {
+                  readonly name: 'media_assets_pending_file_id_idx_34579ab1';
+                  readonly prefix: 'media_assets_pending_file_id_idx';
+                  readonly columns: readonly ['pending_file_id'];
+                  readonly unique: false;
+                },
               ];
               foreignKeys: readonly [
                 {
@@ -584,6 +599,18 @@ type ContractBase = Omit<
                   readonly target: {
                     readonly namespaceId: 'public' & NamespaceId;
                     readonly tableName: 'media_asset_versions';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'media_assets';
+                    readonly columns: readonly ['pending_file_id'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'media_files';
                     readonly columns: readonly ['id'];
                   };
                 },
@@ -953,6 +980,10 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly pendingFileId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly status: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
@@ -995,6 +1026,18 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['id'];
                 };
               };
+              readonly pendingFile: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'MediaFile';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['pendingFileId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
               readonly versions: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -1017,6 +1060,7 @@ type ContractBase = Omit<
                 readonly folderId: { readonly column: 'folder_id' };
                 readonly id: { readonly column: 'id' };
                 readonly kind: { readonly column: 'kind' };
+                readonly pendingFileId: { readonly column: 'pending_file_id' };
                 readonly status: { readonly column: 'status' };
                 readonly title: { readonly column: 'title' };
                 readonly updatedAt: { readonly column: 'updated_at' };
@@ -1086,6 +1130,17 @@ type ContractBase = Omit<
               };
             };
             readonly relations: {
+              readonly pendingAssets: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'MediaAsset';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['pendingFileId'];
+                };
+              };
               readonly variants: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;

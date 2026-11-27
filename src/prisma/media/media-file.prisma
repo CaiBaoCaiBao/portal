@@ -19,6 +19,7 @@ model MediaFile {
 
     versions AssetVersion[]
     variants MediaVariant[]
+    pendingAssets MediaAsset[] @relation("AssetPendingFile")
     
     @@index([storageKey])
     @@map("media_files")

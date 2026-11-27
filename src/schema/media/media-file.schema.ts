@@ -30,9 +30,10 @@ export const addFileSchema = z.object({
 })
 
 export const addFileCallbackSchema = z.object({
-    assetId:z.uuidv7(),
+    assetId: z.uuidv7(),
     fileId: z.uuidv7(),
-    status: z.enum(MEDIA_FILE_STATUS).default("ready"),
+    currentVersionId: z.uuidv7(),
+    size: z.preprocess((val) => Number(val), z.number().min(0, "Callback size must be greater than 0")),
     qiniuSuccess: z.boolean().default(false),
 })
 

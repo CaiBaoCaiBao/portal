@@ -183,6 +183,13 @@
                   "kind": "scalar"
                 }
               },
+              "pendingFileId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "status": {
                 "nullable": false,
                 "type": {
@@ -241,6 +248,22 @@
                   "namespace": "public"
                 }
               },
+              "pendingFile": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "pendingFileId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "MediaFile",
+                  "namespace": "public"
+                }
+              },
               "versions": {
                 "cardinality": "1:N",
                 "on": {
@@ -276,6 +299,9 @@
                 },
                 "kind": {
                   "column": "kind"
+                },
+                "pendingFileId": {
+                  "column": "pending_file_id"
                 },
                 "status": {
                   "column": "status"
@@ -389,6 +415,21 @@
               }
             },
             "relations": {
+              "pendingAssets": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "pendingFileId"
+                  ]
+                },
+                "to": {
+                  "model": "MediaAsset",
+                  "namespace": "public"
+                }
+              },
               "variants": {
                 "cardinality": "1:N",
                 "on": {
@@ -829,6 +870,11 @@
                   "dataType": "pg/text",
                   "nullable": false
                 },
+                "pending_file_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
                 "status": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
@@ -888,6 +934,25 @@
                     "namespaceId": "public",
                     "tableName": "media_asset_versions"
                   }
+                },
+                {
+                  "index": {
+                    "name": "media_assets_pending_file_id_idx_34579ab1"
+                  },
+                  "source": {
+                    "columns": [
+                      "pending_file_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "media_assets"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "media_files"
+                  }
                 }
               ],
               "indexes": [
@@ -897,6 +962,14 @@
                   ],
                   "name": "media_assets_folder_id_idx_61252c35",
                   "prefix": "media_assets_folder_id_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "pending_file_id"
+                  ],
+                  "name": "media_assets_pending_file_id_idx_34579ab1",
+                  "prefix": "media_assets_pending_file_id_idx",
                   "unique": false
                 }
               ],
@@ -1171,7 +1244,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "b429cf843dfb16fde4b314e7b6071a69a038f1b45f461ed5459ffcd12998360c"
+    "storageHash": "a9dbb6c1c7c25cbdfcea1677586258002677580349274ad0f0eefb4ec25c453c"
   },
   "execution": {
     "executionHash": "8759b9210c4b71043fc0787994b5058f94aff804ba2781797c3c98c0f9d5738d",

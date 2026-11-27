@@ -52,7 +52,7 @@ import {
     type MediaFolderListVO
 } from "@/types/media.type";
 import qiniu from "qiniu";
-import { db } from "@/prisma/db";
+import { db, type Tx } from "@/prisma/db";
 
 export class MediaService {
     static readonly ak = serverEnvConfig.qiniu.accessKey;
@@ -66,64 +66,58 @@ export class MediaService {
     // ========================================================================
 
     /** @description 创建媒体资产 */
-    static async createAsset(dto: MediaAssetDTO): Promise<{ assetId: string, fileId: string, token?: string }> {
+    static async createAsset(dto: MediaAssetDTO): Promise<{
+        assetId: string,
+        fileId: string,
+        storageKey: string,
+        token?: string,
+    }> {
         const existing = await MediaFileDao.findByChecksum(dto.etag);
-
-        if (existing) {
-            if (existing.status === "ready") {
-                dto.status = "ready";
-                const created = await this.createAssetTransaction(dto, existing.id);
-                return created;
-            } else if (existing.status === "failed") {
-                await MediaFileDao.update(existing.id, {
-                    status: "uploading",
-                });
-                // 重新生成上传Token，并记录更新时间
-                const uploadToken = this.generateUploadToken(existing.storageKey);
-                await MediaFileDao.update(existing.id, {
-                    updatedAt: new Date(),
-                });
-                const created = await this.createAssetTransaction(dto, existing.id);
-                return { ...created, token: uploadToken };
-            } else if (existing.status === "uploading") {
-                // 查询七牛存储文件是否存在
-                const qiniuStatusCode = await this.checkQiniuObject(existing.storageKey);
-                if (qiniuStatusCode === 200) {
-                    await MediaFileDao.update(existing.id, {
-                        status: "ready",
-                    });
-                    dto.status = "ready";
-                    const created = await this.createAssetTransaction(dto, existing.id);
-                    return created;
-                } else if (qiniuStatusCode === 404) {
-                    const timeDiff = Date.now() - new Date(existing.updatedAt).getTime();
-                    if (timeDiff < 10 * 1000) {
-                        // 10秒内刚发过Token
-                        throw new BadRequestError("MEDIA", `Pleast ${10 * 1000 - timeDiff}s later to try.`)
-                    }
-                    const uploadToken = this.generateUploadToken(existing.storageKey);
-                    await MediaFileDao.update(existing.id, {
-                        status: "uploading",
-                        updatedAt: new Date(),
-                    });
-                    const created = await this.createAssetTransaction(dto, existing.id);
-                    return { ...created, token: uploadToken };
-                } else {
-                    throw new QiniuError("Check Qiniu Storage", "Failed to stat file");
-                }
-            } else {
-                throw new InternalError(
-                    "MEDIA",
-                    `Media file ${existing.originalName} has unknown status: ${existing.status}. - id: ${existing.id}`
-                )
-            }
+        if (!existing) {
+            const uploadToken = this.generateUploadToken(dto.storageKey);
+            const created = await this.createAssetTransaction(dto, null);
+            return { ...created, storageKey: dto.storageKey, token: uploadToken };
         }
-
-        // 文件记录不存在，创建文件记录和媒体资产记录
-        const uploadToken = this.generateUploadToken(dto.storageKey);
-        const created = await this.createAssetTransaction(dto, null);
-
-        return { ...created, token: uploadToken };
+        if (existing.status === "ready") {
+            dto.status = "ready";
+            const created = await this.createAssetTransaction(dto, existing.id);
+            return { ...created, storageKey: existing.storageKey };
+        }
+        if (existing.status !== "failed" && existing.status !== "uploading") {
+            throw new InternalError(
+                "MEDIA",
+                `Media file ${existing.originalName} has unknown status: ${existing.status}. - id: ${existing.id}`,
+            );
+        }
+        if (existing.status === "uploading") {
+            const qiniuStatusCode = await this.checkQiniuObject(existing.storageKey);
+            if (qiniuStatusCode === 200) {
+                const created = await this.finishPendingOrCreate(dto, existing.id);
+                return { ...created, storageKey: existing.storageKey };
+            }
+            if (qiniuStatusCode !== 404) {
+                throw new QiniuError("Check Qiniu Storage", "Failed to stat file");
+            }
+            this.assertTokenInterval(existing.updatedAt);
+        }
+        const uploadToken = this.generateUploadToken(existing.storageKey);
+        await MediaFileDao.update(existing.id, {
+            status: "uploading",
+            updatedAt: new Date(),
+        });
+        // 同一未完成上传再次创建时，复用已有资产
+        const pending = await MediaAssetDao.findPendingUpload(existing.id, dto.title, dto.folderId);
+        if (pending) {
+            return {
+                assetId: pending.id,
+                fileId: existing.id,
+                storageKey: existing.storageKey,
+                token: uploadToken,
+            };
+        }
+        dto.status = "pending";
+        const created = await this.createAssetTransaction(dto, existing.id);
+        return { ...created, storageKey: existing.storageKey, token: uploadToken };
     }
 
     /** @description 创建媒体资产事务 */
@@ -131,13 +125,15 @@ export class MediaService {
         dto: MediaAssetDTO, existingId: string | null
     ): Promise<{ assetId: string, fileId: string }> {
         return await db.transaction(async (tx) => {
+            const ready = Boolean(existingId) && dto.status === "ready";
             let fileId: string = existingId ?? "";
             const assetId = await MediaAssetDao.insert({
                 title: dto.title,
-                description: null,
+                description: dto.description,
                 folderId: dto.folderId,
-                status: dto.status,
+                status: ready ? "ready" : "pending",
                 currentVersionId: null,
+                pendingFileId: ready ? null : existingId,
                 kind: dto.type,
             }, tx.orm);
             if (!existingId) {
@@ -154,40 +150,109 @@ export class MediaService {
                     durationMs: dto.durationMs,
                     updatedAt: new Date(),
                 }, tx.orm);
+                await MediaAssetDao.update(assetId, { pendingFileId: fileId }, tx.orm);
             }
-            if (existingId && dto.status === "ready") {
+            if (ready && existingId) {
                 const versionId = await AssetVersionDao.insert({
-                    assetId: assetId,
+                    assetId,
                     fileId: existingId,
-                    version: 1
-                }, tx.orm)
-                await MediaAssetDao.update(assetId, { currentVersionId: versionId });
+                    version: 1,
+                }, tx.orm);
+                await MediaAssetDao.update(assetId, { currentVersionId: versionId }, tx.orm);
             }
             return { assetId, fileId };
-        })
+        });
+    }
+
+    /** @description 对象已经在七牛时，完成未完成资产或新建一个就绪资产 */
+    private static async finishPendingOrCreate(
+        dto: MediaAssetDTO, fileId: string,
+    ): Promise<{ assetId: string, fileId: string }> {
+        const pending = await MediaAssetDao.findPendingUpload(fileId, dto.title, dto.folderId);
+        if (!pending) {
+            await MediaFileDao.update(fileId, { status: "ready" });
+            dto.status = "ready";
+            return this.createAssetTransaction(dto, fileId);
+        }
+        await db.transaction(async (tx) => {
+            await MediaFileDao.update(fileId, { status: "ready" }, tx.orm);
+            const versionId = await AssetVersionDao.insert({
+                assetId: pending.id,
+                fileId,
+                version: 1,
+            }, tx.orm);
+            await MediaAssetDao.update(pending.id, {
+                currentVersionId: versionId,
+                status: "ready",
+                pendingFileId: null,
+            }, tx.orm);
+        });
+        return { assetId: pending.id, fileId };
     }
 
     /** @description 创建媒体资产回调 */
-    static async createAssetCallback(dto: MediaAssetCallbackDTO) {
-        const asset = await MediaAssetDao.findById(dto.assetId);
+    static async createAssetCallback(dto: MediaAssetCallbackDTO): Promise<{ versionId: string } | void> {
+        const asset = await MediaAssetDao.findUploadState(dto.assetId);
         if (!asset) throw new NotFoundError("MEDIA", "Asset not found");
+        if (asset.pendingFileId && asset.pendingFileId !== dto.fileId) {
+            throw new BadRequestError("MEDIA", "File does not belong to this asset");
+        }
+        const file = await MediaFileDao.findById(dto.fileId);
+        if (!file) throw new NotFoundError("MEDIA", "File not found");
+
+        const linked = (await AssetVersionDao.query({
+            assetId: dto.assetId,
+            fileId: dto.fileId,
+        }))[0];
+        if (linked) return { versionId: linked.id };
         if (asset.status === "ready") throw new BadRequestError("MEDIA", "Asset is already ready");
-        await db.transaction(async (tx) => {
-            if (dto.qiniuSuccess) {
-                const versionId = await AssetVersionDao.insert({
-                    assetId: dto.assetId,
-                    fileId: dto.fileId,
-                    version: 1
-                }, tx.orm)
-                await MediaAssetDao.update(dto.assetId, {
-                    currentVersionId: versionId,
-                    status: "ready"
-                }, tx.orm);
-            } else {
+
+        if (!dto.qiniuSuccess) {
+            await db.transaction(async (tx) => {
                 await MediaAssetDao.delete(dto.assetId, tx.orm);
-                await MediaFileDao.update(dto.fileId, { status: "failed" }, tx.orm);
-            }
-        })
+                await this.markFileFailedIfUnreferenced(dto.fileId, tx.orm);
+            });
+            return;
+        }
+
+        const versionId = await db.transaction(async (tx) => {
+            const createdVersionId = await AssetVersionDao.insert({
+                assetId: dto.assetId,
+                fileId: dto.fileId,
+                version: 1,
+            }, tx.orm);
+            await MediaFileDao.update(dto.fileId, {
+                status: "ready",
+                size: BigInt(dto.size),
+            }, tx.orm);
+            await MediaAssetDao.update(dto.assetId, {
+                currentVersionId: createdVersionId,
+                status: "ready",
+                pendingFileId: null,
+            }, tx.orm);
+            return createdVersionId;
+        });
+        return { versionId };
+    }
+
+    /** @description 距上次签发凭证不足 10 秒时拒绝重发 */
+    private static assertTokenInterval(updatedAt: string | Date) {
+        const timeDiff = Date.now() - new Date(updatedAt).getTime();
+        if (timeDiff < 10 * 1000) {
+            const waitSeconds = Math.ceil((10 * 1000 - timeDiff) / 1000);
+            throw new BadRequestError("MEDIA", `Please retry in ${waitSeconds}s.`);
+        }
+    }
+
+    /** @description 没有版本引用这份文件时，才把它标成失败 */
+    private static async markFileFailedIfUnreferenced(
+        fileId: string, orm: Tx["orm"] = db.orm,
+    ) {
+        const file = await MediaFileDao.findById(fileId);
+        if (!file || file.status === "ready") return;
+        const referenced = await AssetVersionDao.query({ fileId });
+        if (referenced.length > 0) return;
+        await MediaFileDao.update(fileId, { status: "failed" }, orm);
     }
 
     /** @description 更新媒体资产信息 */
@@ -329,7 +394,7 @@ export class MediaService {
         storageKey: string,
         token?: string,
         versionId?: string,
-    } | void> {
+    }> {
         const asset = await MediaAssetDao.findById(dto.assetId);
         if (!asset) throw new NotFoundError("MEDIA", "Asset not found");
         if (dto.currentVersionId !== asset.currentVersionId)
@@ -340,7 +405,9 @@ export class MediaService {
 
         const existing = await MediaFileDao.findByChecksum(dto.etag);
         if (existing) {
-            if (existing.id === version.fileId) return;
+            if (existing.id === version.fileId) {
+                return { fileId: existing.id, storageKey: existing.storageKey };
+            }
             if (existing.status === "ready") {
                 dto.status = "ready";
                 const added = await this.addFileTransaction(dto, existing.id);
@@ -349,21 +416,16 @@ export class MediaService {
                     storageKey: existing.storageKey,
                     versionId: added.versionId,
                 };
-            } else if (existing.status === "failed") {
-                await MediaFileDao.update(existing.id, { status: "uploading" });
-                const uploadToken = this.generateUploadToken(existing.storageKey);
-                await MediaFileDao.update(existing.id, {
-                    updatedAt: new Date(),
-                });
-                return {
-                    fileId: existing.id,
-                    storageKey: existing.storageKey,
-                    token: uploadToken,
-                };
-            } else if (existing.status === "uploading") {
+            }
+            if (existing.status !== "failed" && existing.status !== "uploading") {
+                throw new InternalError(
+                    "MEDIA",
+                    `Media file ${existing.originalName} has unknown status: ${existing.status}. - id: ${existing.id}`,
+                );
+            }
+            if (existing.status === "uploading") {
                 const qiniuStatusCode = await this.checkQiniuObject(existing.storageKey);
                 if (qiniuStatusCode === 200) {
-                    await MediaFileDao.update(existing.id, { status: "ready" });
                     dto.status = "ready";
                     const added = await this.addFileTransaction(dto, existing.id);
                     return {
@@ -371,31 +433,22 @@ export class MediaService {
                         storageKey: existing.storageKey,
                         versionId: added.versionId,
                     };
-                } else if (qiniuStatusCode === 404) {
-                    const timeDiff = Date.now() - new Date(existing.updatedAt).getTime();
-                    if (timeDiff < 10 * 1000) {
-                        // 10秒内刚发过Token
-                        throw new BadRequestError("MEDIA", `Pleast ${10 * 1000 - timeDiff}s later to try.`)
-                    }
-                    const uploadToken = this.generateUploadToken(existing.storageKey);
-                    await MediaFileDao.update(existing.id, {
-                        status: "uploading",
-                        updatedAt: new Date(),
-                    });
-                    return {
-                        fileId: existing.id,
-                        storageKey: existing.storageKey,
-                        token: uploadToken,
-                    };
-                } else {
+                }
+                if (qiniuStatusCode !== 404) {
                     throw new QiniuError("Check Qiniu Storage", "Failed to stat file");
                 }
-            } else {
-                throw new InternalError(
-                    "MEDIA",
-                    `Media file ${existing.originalName} has unknown status: ${existing.status}. - id: ${existing.id}`
-                );
+                this.assertTokenInterval(existing.updatedAt);
             }
+            const uploadToken = this.generateUploadToken(existing.storageKey);
+            await MediaFileDao.update(existing.id, {
+                status: "uploading",
+                updatedAt: new Date(),
+            });
+            return {
+                fileId: existing.id,
+                storageKey: existing.storageKey,
+                token: uploadToken,
+            };
         }
 
         const added = await this.addFileTransaction(dto, null);
@@ -431,7 +484,15 @@ export class MediaService {
             return { fileId };
         }
         if (dto.status !== "ready") return { fileId: existingId };
+        const linked = versions.find((item) => item.fileId === existingId);
+        if (linked) {
+            if (linked.id !== dto.currentVersionId) {
+                await MediaAssetDao.update(dto.assetId, { currentVersionId: linked.id });
+            }
+            return { fileId: existingId, versionId: linked.id };
+        }
         const versionId = await db.transaction(async (tx) => {
+            await MediaFileDao.update(existingId, { status: "ready" }, tx.orm);
             const createdVersionId = await AssetVersionDao.insert({
                 assetId: dto.assetId,
                 fileId: existingId,
@@ -446,31 +507,50 @@ export class MediaService {
     }
 
     /** @description 添加媒体文件回调 */
-    static async addFileCallback(dto: AddFilECallbackDTO) {
+    static async addFileCallback(
+        dto: AddFilECallbackDTO,
+    ): Promise<{ versionId: string, current: boolean } | void> {
         const asset = await MediaAssetDao.findById(dto.assetId);
         if (!asset) throw new NotFoundError("MEDIA", "Asset is not found");
         const file = await MediaFileDao.findById(dto.fileId);
         if (!file) throw new NotFoundError("MEDIA", "Target file not found");
-        if (file.status === "ready") return;
+
+        const versions = await AssetVersionDao.query({ assetId: dto.assetId });
+        const linked = versions.find((item) => item.fileId === dto.fileId);
+        if (linked) {
+            return {
+                versionId: linked.id,
+                current: asset.currentVersionId === linked.id,
+            };
+        }
 
         if (!dto.qiniuSuccess) {
-            await MediaFileDao.update(dto.fileId, { status: "failed" });
+            await this.markFileFailedIfUnreferenced(dto.fileId);
             return;
         }
 
-        const versions = await AssetVersionDao.query({ assetId: dto.assetId });
-        const maxVersion = versions.reduce((max, v) => Math.max(max, v.version), 0);
-        await db.transaction(async (tx) => {
-            await MediaFileDao.update(dto.fileId, { status: "ready" }, tx.orm);
-            const versionId = await AssetVersionDao.insert({
+        const maxVersion = versions.reduce((max, item) => Math.max(max, item.version), 0);
+        const switchCurrent = asset.currentVersionId === dto.currentVersionId;
+        const versionId = await db.transaction(async (tx) => {
+            if (file.status !== "ready") {
+                await MediaFileDao.update(dto.fileId, {
+                    status: "ready",
+                    size: BigInt(dto.size),
+                }, tx.orm);
+            }
+            const createdVersionId = await AssetVersionDao.insert({
                 assetId: dto.assetId,
                 fileId: dto.fileId,
                 version: maxVersion + 1,
             }, tx.orm);
-            await MediaAssetDao.update(dto.assetId, {
-                currentVersionId: versionId,
-            }, tx.orm);
+            if (switchCurrent) {
+                await MediaAssetDao.update(dto.assetId, {
+                    currentVersionId: createdVersionId,
+                }, tx.orm);
+            }
+            return createdVersionId;
         });
+        return { versionId, current: switchCurrent };
     }
 
     /** @description 删除媒体文件 */
@@ -513,6 +593,7 @@ export class MediaService {
             for (const variant of variants) {
                 await MediaVariantDao.delete(variant.id, tx.orm);
             }
+            await MediaAssetDao.releasePendingFile(file.id, tx.orm);
             await MediaFileDao.delete(file.id, tx.orm);
         });
 

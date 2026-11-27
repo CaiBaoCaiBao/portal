@@ -41,9 +41,10 @@ export const mediaAssetAddVersionSchema = z.object({
 });
 
 export const mediaAssetUpdateSchema = z.object({
-    title: z.string().trim().min(1, "Asset title is required"),
-    description: z.string().trim().min(1, "Asset description is required").nullable().default(null),
-    status: z.enum(MEDIA_ASSET_STATUS),
+    title: z.string().trim().min(1, "Asset title is required").optional(),
+    description: z.string().trim().min(1, "Asset description is required").nullable().default(null).optional(),
+    status: z.enum(MEDIA_ASSET_STATUS).optional(),
+    folderId: z.uuidv7().nullable().optional()
 });
 
 export const mediaAssetQuerySchema = z.object({

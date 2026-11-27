@@ -19,8 +19,15 @@ type MediaAssetInputFields = FieldInputTypes["public"]["MediaAsset"];
 
 export type MediaAssetInput = Pick<
     MediaAssetInputFields,
-    "title" | "description" | "kind" | "status" | "folderId" | "currentVersionId"
+    "title" | "description" | "kind" | "status" | "folderId" | "currentVersionId" | "pendingFileId"
 >;
+
+export type MediaAssetUploadState = {
+    readonly id: string;
+    readonly status: string;
+    readonly pendingFileId: string | null;
+    readonly currentVersionId: string | null;
+};
 
 export type MediaAssetQuery = {
     readonly folderId: string | null;
@@ -121,6 +128,57 @@ export class MediaAssetDao {
                 .where({ id })
                 .select(...mediaAssetDetailFields)
                 .first();
+        } catch (error) {
+            throw mapPrismaError(error, "MEDIA");
+        }
+    }
+
+    /** @description 查询资产的上传状态 */
+    static async findUploadState(id: string): Promise<MediaAssetUploadState | null> {
+        try {
+            return await db.orm.public.MediaAsset
+                .where({ id })
+                .select("id", "status", "pendingFileId", "currentVersionId")
+                .first();
+        } catch (error) {
+            throw mapPrismaError(error, "MEDIA");
+        }
+    }
+
+    /** @description 查找同一目录、同一标题下尚未完成的资产 */
+    static async findPendingUpload(
+        fileId: string,
+        title: string,
+        folderId: string | null,
+    ): Promise<{ id: string } | null> {
+        try {
+            return await db.orm.public.MediaAsset
+                .where((asset, { fns }) => fns.and(
+                    asset.pendingFileId.eq(fileId),
+                    asset.title.eq(title),
+                    asset.folderId.eq(folderId),
+                    asset.status.eq("pending"),
+                ))
+                .orderBy((asset) => asset.createdAt.desc())
+                .select("id")
+                .first();
+        } catch (error) {
+            throw mapPrismaError(error, "MEDIA");
+        }
+    }
+
+    /** @description 解除仍指向该文件的未完成资产 */
+    static async releasePendingFile(fileId: string, orm: Tx["orm"] = db.orm): Promise<void> {
+        try {
+            const rows = await orm.public.MediaAsset
+                .where((asset, { fns }) => fns.eq(asset.pendingFileId, fileId))
+                .select("id", "currentVersionId")
+                .all();
+            for (const row of rows) {
+                await orm.public.MediaAsset.where({ id: row.id }).update(row.currentVersionId
+                    ? { pendingFileId: null }
+                    : { pendingFileId: null, status: "archived" });
+            }
         } catch (error) {
             throw mapPrismaError(error, "MEDIA");
         }

@@ -15,11 +15,16 @@ model MediaAsset {
     
     currentVersionId String? @unique
     currentVersion AssetVersion? @relation("AssetCurrentVersion",fields: [currentVersionId], references: [id])
+
+    pendingFileId String? @map("pending_file_id")
+    pendingFile MediaFile? @relation("AssetPendingFile", fields: [pendingFileId], references: [id])
     
     versions AssetVersion[] @relation("AssetVersions")
 
+    @@index([pendingFileId])
     @@map("media_assets")
 }
 
 // - kind / status 用 Zod 收紧枚举
 // - folderId 可空，资产也可以不进任何目录
+// - pendingFileId 指向尚未完成上传的文件。同一目录、同一标题、同一文件只保留一个未完成资产
