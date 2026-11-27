@@ -20,6 +20,7 @@ Portal 是 JuntL 的门户站点，用于内容、个人主页的展示以及对
   - [x] 创建媒体资产 ![2026-11-26](https://img.shields.io/badge/Complete-2026--11--26-green)
   - [x] 增加版本文件 ![2026-11-26](https://img.shields.io/badge/Complete-2026--11--26-green)
   - [x] 切换资产版本 ![2026-11-26](https://img.shields.io/badge/Complete-2026--11--26-green)
+  - [x] 生成衍生文件 ![2026-11-26](https://img.shields.io/badge/Complete-2026--11--26-green)
   - [ ] 更新媒体资产信息
   - [ ] 删除媒体资产
   - [ ] 动态分页查询媒体资产

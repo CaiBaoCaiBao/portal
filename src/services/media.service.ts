@@ -6,7 +6,20 @@ import {
     MediaAssetDao,
     AssetVersionDao,
     MediaFileDao,
+    MediaVariantDao,
 } from "@/dao";
+import {
+    AUDIO_MIME,
+    IMAGE_MIME,
+    VIDEO_MIME,
+} from "@/constant/mime-type.constant";
+import {
+    DOCUMENT_EXT,
+    DOCUMENT_MIME,
+    VARIANT_AV_PURPOSE,
+    VARIANT_DOC_PURPOSE,
+    VARIANT_IMAGE_PURPOSE,
+} from "@/constant/media/media-variant.constant";
 import {
     type MediaFolderDTO,
     type MediaFolderQueryDTO,
@@ -16,6 +29,7 @@ import {
     mediaFolderOrderSchema,
     AddFilECallbackDTO,
     type AssetVersionDTO,
+    MediaVariantDTO,
 } from "@/schema/media";
 import {
     type PaginationDTO,
@@ -339,6 +353,224 @@ export class MediaService {
         await MediaAssetDao.update(dto.assetId, {
             currentVersionId: dto.targetVersionId,
         });
+    }
+
+    // ========================================================================
+    // ========================== VARIANT SERVICES ============================
+    // ========================================================================
+
+    /** @description 生成媒体变体 */
+    static async generateVariant(dto: MediaVariantDTO) {
+        const file = await MediaFileDao.findById(dto.fileId);
+        if (!file) throw new NotFoundError("MEDIA", "File not found");
+        if (file.status !== "ready") return;
+        if (!this.purposeMatchesFile(file.mimeType, dto.purpose)) {
+            throw new BadRequestError("MEDIA", "Purpose does not match file type");
+        }
+        if (dto.purpose === "waveform") {
+            throw new BadRequestError("MEDIA", "Waveform variant is not supported");
+        }
+
+        const existing = (await MediaVariantDao.findByFileId(dto.fileId))
+            .find((item) => item.purpose === dto.purpose);
+        if (existing?.status === "ready" || existing?.status === "processing") return;
+
+        const target = this.variantTarget(dto.fileId, dto.purpose);
+        const record = {
+            fileId: dto.fileId,
+            purpose: dto.purpose,
+            storageKey: target.storageKey,
+            url: `${this.domain}/${target.storageKey}`,
+            mime: target.mime,
+            status: "processing",
+            size: 0,
+            width: null,
+            height: null,
+        };
+        if (existing) {
+            await MediaVariantDao.update(existing.id, record);
+        } else {
+            await MediaVariantDao.insert(record);
+        }
+
+        try {
+            if (dto.purpose === "preview_pdf" && file.mimeType === "application/pdf") {
+                await this.copyQiniuObject(file.storageKey, target.storageKey);
+                await this.markVariant(dto.fileId, dto.purpose, {
+                    ...record,
+                    status: "ready",
+                    size: this.toVariantSize(file.size),
+                });
+                return;
+            }
+            const fops = this.buildVariantFops(file.mimeType, target.storageKey, dto.purpose);
+            await this.submitVariantPfop(file.storageKey, fops);
+        } catch (error) {
+            try {
+                await this.markVariant(dto.fileId, dto.purpose, {
+                    ...record,
+                    status: "failed",
+                });
+            } catch {
+                // 回写失败时仍抛出原来的处理错误
+            }
+            throw error;
+        }
+    }
+
+    /** @description 判断衍生用途是否适用于该文件 */
+    private static purposeMatchesFile(
+        mimeType: string,
+        purpose: MediaVariantDTO["purpose"],
+    ): boolean {
+        if (this.includesText(IMAGE_MIME, mimeType)) {
+            return this.includesText(VARIANT_IMAGE_PURPOSE, purpose);
+        }
+        if (this.includesText(AUDIO_MIME, mimeType)) {
+            return purpose === "audio_track" || purpose === "waveform";
+        }
+        if (this.includesText(VIDEO_MIME, mimeType)) {
+            return this.includesText(VARIANT_AV_PURPOSE, purpose);
+        }
+        if (this.includesText(DOCUMENT_MIME, mimeType)) {
+            return this.includesText(VARIANT_DOC_PURPOSE, purpose);
+        }
+        return false;
+    }
+
+    /** @description 衍生文件的存储键和 MIME */
+    private static variantTarget(
+        fileId: string,
+        purpose: MediaVariantDTO["purpose"],
+    ): { storageKey: string, mime: string } {
+        const spec = {
+            thumbnail: ["jpg", "image/jpeg"],
+            preview_gif: ["gif", "image/gif"],
+            preview_webp: ["webp", "image/webp"],
+            transcode_vedio: ["mp4", "video/mp4"],
+            hls_stream: ["m3u8", "application/vnd.apple.mpegurl"],
+            audio_track: ["mp3", "audio/mpeg"],
+            waveform: ["json", "application/json"],
+            sprite_sheet: ["jpg", "image/jpeg"],
+            preview_pdf: ["pdf", "application/pdf"],
+        } as const satisfies Record<MediaVariantDTO["purpose"], readonly [string, string]>;
+        const [ext, mime] = spec[purpose];
+        const storageKey = purpose === "sprite_sheet"
+            ? `variants/${fileId}/sprite_sheet-000001.jpg`
+            : `variants/${fileId}/${purpose}.${ext}`;
+        return { storageKey, mime };
+    }
+
+    /** @description 按用途拼七牛处理指令 */
+    private static buildVariantFops(
+        mimeType: string,
+        storageKey: string,
+        purpose: MediaVariantDTO["purpose"],
+    ): string {
+        const saveas = qiniu.util.encodedEntry(this.bucket, storageKey);
+        switch (purpose) {
+            case "thumbnail":
+                return `imageView2/2/w/480/h/480/format/jpg|saveas/${saveas}`;
+            case "preview_gif":
+                return `imageView2/2/w/480/format/gif|saveas/${saveas}`;
+            case "preview_webp":
+                return `imageView2/2/w/1600/format/webp|saveas/${saveas}`;
+            case "transcode_vedio":
+                return `avthumb/mp4/vcodec/libx264/acodec/aac|saveas/${saveas}`;
+            case "hls_stream": {
+                const pattern = qiniu.util.urlsafeBase64Encode(
+                    storageKey.replace(/\.m3u8$/, "-$(count).ts"),
+                );
+                return `avthumb/m3u8/noDomain/1/segtime/10/vcodec/libx264/acodec/aac/savePattern/${pattern}|saveas/${saveas}`;
+            }
+            case "audio_track":
+                return `avthumb/mp3/acodec/libmp3lame/vn/1|saveas/${saveas}`;
+            case "sprite_sheet": {
+                const pattern = qiniu.util.urlsafeBase64Encode(
+                    storageKey.replace(/-000001\.jpg$/, "-$(count).jpg"),
+                );
+                return `vsample/jpg/spriteFormat/jpg/frames/10/lines/2/columns/5/saveSpritePattern/${pattern}`;
+            }
+            case "preview_pdf": {
+                const ext = DOCUMENT_EXT[mimeType];
+                if (!ext) throw new BadRequestError("MEDIA", "Purpose does not match file type");
+                return `yifangyun_preview/v2/ext/${ext}/format/pdf|saveas/${saveas}`;
+            }
+            case "waveform":
+                throw new BadRequestError("MEDIA", "Waveform variant is not supported");
+        }
+    }
+
+    /** @description 回写衍生记录状态 */
+    private static async markVariant(
+        fileId: string,
+        purpose: MediaVariantDTO["purpose"],
+        data: {
+            fileId: string,
+            purpose: string,
+            storageKey: string,
+            url: string,
+            mime: string,
+            status: string,
+            size: number,
+            width: null,
+            height: null,
+        },
+    ) {
+        const saved = (await MediaVariantDao.findByFileId(fileId))
+            .find((item) => item.purpose === purpose);
+        if (!saved) throw new NotFoundError("MEDIA", "Variant not found");
+        await MediaVariantDao.update(saved.id, data);
+    }
+
+    /** @description 把已是 PDF 的源文件复制成预览衍生 */
+    private static async copyQiniuObject(sourceKey: string, targetKey: string) {
+        const bucketManager = new qiniu.rs.BucketManager(this.mc, this.qiniuConfig());
+        const copied = await bucketManager.copy(
+            this.bucket,
+            sourceKey,
+            this.bucket,
+            targetKey,
+            { force: true },
+        );
+        if (copied.resp.statusCode !== 200) {
+            throw new QiniuError("Variant", "Failed to copy variant", {
+                status: copied.resp.statusCode,
+            });
+        }
+    }
+
+    /** @description 提交七牛持久化处理 */
+    private static submitVariantPfop(sourceKey: string, fops: string): Promise<void> {
+        const manager = new qiniu.fop.OperationManager(this.mc, this.qiniuConfig());
+        return new Promise((resolve, reject) => {
+            manager.pfop(this.bucket, sourceKey, [fops], "", { force: true }, (error, body, info) => {
+                if (error) {
+                    reject(new QiniuError("Variant", error.message, { cause: error }));
+                    return;
+                }
+                if (info?.statusCode !== 200) {
+                    const message = body && typeof body === "object" && "error" in body
+                        ? String(body.error)
+                        : "Failed to submit variant";
+                    reject(new QiniuError("Variant", message, { status: info?.statusCode }));
+                    return;
+                }
+                resolve();
+            });
+        });
+    }
+
+    private static includesText(list: readonly string[], value: string): boolean {
+        return list.includes(value);
+    }
+
+    private static toVariantSize(size: bigint): number {
+        const value = Number(size);
+        if (!Number.isSafeInteger(value) || value > 2147483647) {
+            throw new BadRequestError("MEDIA", "File is too large for a variant");
+        }
+        return value;
     }
 
     // ========================================================================
