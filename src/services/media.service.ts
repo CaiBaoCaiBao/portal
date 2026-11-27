@@ -882,9 +882,9 @@ export class MediaService {
 
     /** @description 获取媒体目录列表 */
     static async getFolderList(
-        query: MediaFolderQueryDTO = {},
-        page: PaginationDTO = { pageIndex: 0, pageSize: 10 },
-        order: OrderDTO<typeof mediaFolderOrderSchema> = []
+        query: MediaFolderQueryDTO,
+        page: PaginationDTO,
+        order: OrderDTO<typeof mediaFolderOrderSchema>
     ): Promise<{
         list: MediaFolderListVO[],
         total: number,

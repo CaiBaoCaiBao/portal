@@ -39,8 +39,9 @@ export function mapZodError(error: unknown, module: Module): AppError | null {
         return null;
     }
 
-    return new BadRequestError(module, "校验失败", {
+    const details = collectIssues(error.issues);
+    return new BadRequestError(module, details[0]?.message ?? "校验失败", {
         cause: error,
-        details: collectIssues(error.issues),
+        details,
     });
 }
