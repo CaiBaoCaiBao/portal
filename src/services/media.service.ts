@@ -46,7 +46,11 @@ import {
     NotFoundError,
     QiniuError,
 } from "@/lib";
-import { type MediaAssetListVO, type MediaFolderListVO } from "@/types/media.type";
+import {
+    type MediaAssetDetailVO,
+    type MediaAssetListVO,
+    type MediaFolderListVO
+} from "@/types/media.type";
 import qiniu from "qiniu";
 import { db } from "@/prisma/db";
 
@@ -274,6 +278,45 @@ export class MediaService {
             }),
             total,
         };
+    }
+
+    /** @description 获取媒体资产详情 */
+    static async getAssetDetail(id: IdQueryDTO): Promise<MediaAssetDetailVO> {
+        const asset = await MediaAssetDao.findById(id);
+        if (!asset) throw new NotFoundError("MEDIA", "Asset not found");
+
+        const [folder, versionRows] = await Promise.all([
+            asset.folderId ? MediaFolderDao.findById(asset.folderId) : null,
+            AssetVersionDao.query({ assetId: id }),
+        ]);
+
+        const fileIds = [...new Set(versionRows.map((version) => version.fileId))];
+        const files = await Promise.all(fileIds.map(async (fileId) => {
+            const [file, variants] = await Promise.all([
+                MediaFileDao.findById(fileId),
+                MediaVariantDao.findByFileId(fileId),
+            ]);
+            if (!file) throw new NotFoundError("MEDIA", "File not found");
+            return [fileId, { ...file, variants }] as const;
+        }));
+        const fileById = new Map(files);
+
+        const versions = versionRows
+            .map((version) => {
+                const file = fileById.get(version.fileId);
+                if (!file) throw new NotFoundError("MEDIA", "File not found");
+                return { ...version, file };
+            })
+            .sort((left, right) => left.version - right.version);
+
+        const currentVersion = asset.currentVersionId
+            ? versions.find((version) => version.id === asset.currentVersionId) ?? null
+            : null;
+        if (asset.currentVersionId && !currentVersion) {
+            throw new NotFoundError("MEDIA", "Version not found");
+        }
+
+        return { ...asset, folder, currentVersion, versions };
     }
 
     // ========================================================================
@@ -811,5 +854,16 @@ export class MediaService {
                 status: removed.resp.statusCode,
             });
         }
+    }
+
+    /** @description 获取媒体文件下载链接 */
+    static async getDownloadUrl(id: IdQueryDTO, expires = 3600): Promise<{ url: string }> {
+        const file = await MediaFileDao.findById(id);
+        if (!file) throw new NotFoundError("MEDIA", "File not found");
+        if (file.status !== "ready") throw new BadRequestError("MEDIA", "File is not ready");
+        const deadline = Math.floor(Date.now() / 1000) + expires;
+        const base = `${this.domain}/${encodeURI(file.storageKey)}?attname=${encodeURIComponent(file.originalName)}&e=${deadline}`;
+        const sign = qiniu.util.base64ToUrlSafe(qiniu.util.hmacSha1(base, this.sk));
+        return { url: `${base}&token=${this.ak}:${sign}` };
     }
 }

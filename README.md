@@ -13,20 +13,24 @@ Portal 是 JuntL 的门户站点，用于内容、个人主页的展示以及对
 以下是该项目正在/计划实施的模块和功能：
 
 - 数字资产模块 ![Dev](https://img.shields.io/badge/Dev-316192)
-  - [x] 创建媒体目录 ![2026-11-22](https://img.shields.io/badge/Complete-2026--11--22-green)
-  - [x] 删除媒体目录 ![2026-11-22](https://img.shields.io/badge/Complete-2026--11--22-green)
-  - [x] 修改媒体目录 ![2026-11-22](https://img.shields.io/badge/Complete-2026--11--22-green)
-  - [x] 动态分页查询媒体目录 ![2026-11-22](https://img.shields.io/badge/Complete-2026--11--22-green)
-  - [x] 创建媒体资产 ![2026-11-26](https://img.shields.io/badge/Complete-2026--11--26-green)
-  - [x] 增加版本文件 ![2026-11-26](https://img.shields.io/badge/Complete-2026--11--26-green)
-  - [x] 切换资产版本 ![2026-11-26](https://img.shields.io/badge/Complete-2026--11--26-green)
-  - [x] 生成衍生文件 ![2026-11-26](https://img.shields.io/badge/Complete-2026--11--26-green)
-  - [x] 删除媒体文件 ![2026-11-27](https://img.shields.io/badge/Complete-2026--11--27-green)
-  - [x] 更新媒体资产信息 ![2026-11-27](https://img.shields.io/badge/Complete-2026--11--27-green)
-  - [x] 删除媒体资产 ![2026-11-27](https://img.shields.io/badge/Complete-2026--11--27-green)
-  - [x] 动态分页查询媒体资产 ![2026-11-27](https://img.shields.io/badge/Complete-2026--11--27-green)
-  - [ ] 获取媒体资产详情
-  - [ ] 生成文件下载链接
+  - 媒体目录 ![2026-11-22](https://img.shields.io/badge/Complete-2026--11--22-green)
+    - [x] 创建
+    - [x] 修改
+    - [x] 删除
+    - [x] 动态分页查询
+  - 媒体资产
+    - [x] 创建 ![2026-11-26](https://img.shields.io/badge/Complete-2026--11--26-green)
+    - [x] 更新信息 ![2026-11-27](https://img.shields.io/badge/Complete-2026--11--27-green)
+    - [x] 删除 ![2026-11-27](https://img.shields.io/badge/Complete-2026--11--27-green)
+    - [x] 动态分页查询 ![2026-11-27](https://img.shields.io/badge/Complete-2026--11--27-green)
+    - [x] 获取详情 ![2026-11-27](https://img.shields.io/badge/Complete-2026--11--27-green)
+  - 资产版本 ![2026-11-26](https://img.shields.io/badge/Complete-2026--11--26-green)
+    - [x] 增加版本文件
+    - [x] 切换当前版本
+  - 媒体文件
+    - [x] 生成衍生文件 ![2026-11-26](https://img.shields.io/badge/Complete-2026--11--26-green)
+    - [x] 删除 ![2026-11-27](https://img.shields.io/badge/Complete-2026--11--27-green)
+    - [x] 生成下载链接 ![2026-11-27](https://img.shields.io/badge/Complete-2026--11--27-green)
 - 内容管理模块
 - 页面管理模块
 

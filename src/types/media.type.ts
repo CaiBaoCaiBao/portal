@@ -55,13 +55,25 @@ export const variantListFields = variantColumns(
 export type MediaFolderListColumns = Row<MediaFolderOutput, typeof mediaFolderListFields>;
 export type MediaFolderDetailColumns = Row<MediaFolderOutput, typeof mediaFolderDetailFields>;
 export type MediaAssetListColumns = Row<MediaAssetOutput, typeof mediaAssetListFields>;
-export type MediaAssetListVO = MediaAssetListColumns & {
-    thumbnailUrl: string | null;
-};
+
 export type MediaAssetDetailColumns = Row<MediaAssetOutput, typeof mediaAssetDetailFields>;
 export type AssetVersionListColumns = Row<AssetVersionOutput, typeof assetVersionListFields>;
 export type AssetVersionDetailColumns = Row<AssetVersionOutput, typeof assetVersionDetailFields>;
 export type MediaFileDetailColumns = Row<MediaFileOutput, typeof mediaFileDetailFields>;
 export type MediaVariantListColumns = Row<MediaVariantOutput, typeof variantListFields>;
 
+export type MediaAssetListVO = MediaAssetListColumns & {
+    thumbnailUrl: string | null;
+};
+export type MediaAssetDetailVO = MediaAssetDetailColumns & {
+    folder: MediaFolderDetailColumns  | null;
+    currentVersion: AssetVersionDetailVO | null;
+    versions: AssetVersionDetailVO[];
+}
+export type MediaFileDetailVO = MediaFileDetailColumns & {
+    variants: MediaVariantListColumns[];
+};
+export type AssetVersionDetailVO = AssetVersionDetailColumns & {
+    file: MediaFileDetailVO;
+};
 export type MediaFolderListVO = Row<MediaFolderOutput, typeof mediaFolderListFields>;
