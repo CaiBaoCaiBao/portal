@@ -30,6 +30,7 @@ import {
     AddFilECallbackDTO,
     type AssetVersionDTO,
     MediaVariantDTO,
+    MediaAssetUpdateDTO,
 } from "@/schema/media";
 import {
     type PaginationDTO,
@@ -181,6 +182,57 @@ export class MediaService {
                 await MediaFileDao.update(dto.fileId, { status: "failed" }, tx.orm);
             }
         })
+    }
+
+    /** @description 更新媒体资产信息 */
+    static async updateAsset(id: IdQueryDTO, dto: MediaAssetUpdateDTO) {
+        const asset = await MediaAssetDao.findById(id);
+        if (!asset) throw new NotFoundError("MEDIA", "Asset not found");
+        await MediaAssetDao.update(id, dto);
+    }
+
+    /** @description 删除媒体资产，并清掉不再被引用的文件 */
+    static async deleteAsset(id: IdQueryDTO) {
+        const asset = await MediaAssetDao.findById(id);
+        if (!asset) throw new NotFoundError("MEDIA", "Asset not found");
+
+        const versions = await AssetVersionDao.query({ assetId: id });
+        const fileIds = [...new Set(versions.map((item) => item.fileId))];
+        const fileVersions = await Promise.all(fileIds.map(async (fileId) => ({
+            fileId,
+            versions: await AssetVersionDao.query({ fileId }),
+        })));
+        const orphanFileIds = fileVersions
+            .filter((item) => item.versions.every((version) => version.assetId === id))
+            .map((item) => item.fileId);
+        const orphans = await Promise.all(orphanFileIds.map(async (fileId) => ({
+            file: await MediaFileDao.findById(fileId),
+            variants: await MediaVariantDao.findByFileId(fileId),
+        })));
+
+        await db.transaction(async (tx) => {
+            if (asset.currentVersionId) {
+                await MediaAssetDao.update(id, { currentVersionId: null }, tx.orm);
+            }
+            for (const version of versions) {
+                await AssetVersionDao.delete(version.id, tx.orm);
+            }
+            await MediaAssetDao.delete(id, tx.orm);
+            for (const orphan of orphans) {
+                if (!orphan.file) continue;
+                for (const variant of orphan.variants) {
+                    await MediaVariantDao.delete(variant.id, tx.orm);
+                }
+                await MediaFileDao.delete(orphan.file.id, tx.orm);
+            }
+        });
+
+        const keys = orphans.flatMap((orphan) => orphan.file
+            ? [orphan.file.storageKey, ...orphan.variants.map((variant) => variant.storageKey)]
+            : []);
+        for (const key of keys) {
+            await this.deleteQiniuObject(key);
+        }
     }
 
     // ========================================================================
@@ -337,7 +389,54 @@ export class MediaService {
         });
     }
 
-    
+    /** @description 删除媒体文件 */
+    static async removeFile(dto: IdQueryDTO) {
+        const file = await MediaFileDao.findById(dto);
+        if (!file) throw new NotFoundError("MEDIA", "File not found");
+        if (file.status === "uploading") {
+            throw new BadRequestError("MEDIA", "File is uploading");
+        }
+
+        const versions = await AssetVersionDao.query({ fileId: file.id });
+        const variants = await MediaVariantDao.findByFileId(file.id);
+        const assetIds = [...new Set(versions.map((item) => item.assetId))];
+        const assets = await Promise.all(assetIds.map(async (assetId) => ({
+            assetId,
+            asset: await MediaAssetDao.findById(assetId),
+            versions: await AssetVersionDao.query({ assetId }),
+        })));
+
+        await db.transaction(async (tx) => {
+            for (const item of assets) {
+                const removingIds = new Set(
+                    versions
+                        .filter((version) => version.assetId === item.assetId)
+                        .map((version) => version.id),
+                );
+                if (!item.asset?.currentVersionId || !removingIds.has(item.asset.currentVersionId)) continue;
+                const remaining = item.versions.filter((version) => !removingIds.has(version.id));
+                const fallback = remaining.reduce<(typeof remaining)[number] | undefined>(
+                    (max, version) => !max || version.version > max.version ? version : max,
+                    undefined,
+                );
+                await MediaAssetDao.update(item.assetId, fallback
+                    ? { currentVersionId: fallback.id }
+                    : { currentVersionId: null, status: "archived" }, tx.orm);
+            }
+            for (const version of versions) {
+                await AssetVersionDao.delete(version.id, tx.orm);
+            }
+            for (const variant of variants) {
+                await MediaVariantDao.delete(variant.id, tx.orm);
+            }
+            await MediaFileDao.delete(file.id, tx.orm);
+        });
+
+        const keys = [file.storageKey, ...variants.map((variant) => variant.storageKey)];
+        for (const key of keys) {
+            await this.deleteQiniuObject(key);
+        }
+    }
 
     // ========================================================================
     // ========================== VERSION SERVICES ============================
@@ -660,5 +759,16 @@ export class MediaService {
         const bucketManager = new qiniu.rs.BucketManager(this.mc, this.qiniuConfig());
         const qiniuStat = await bucketManager.stat(this.bucket, storageKey);
         return qiniuStat.resp.statusCode;
+    }
+
+    /** @description 删除七牛对象，612 表示对象已经不存在 */
+    private static async deleteQiniuObject(storageKey: string) {
+        const bucketManager = new qiniu.rs.BucketManager(this.mc, this.qiniuConfig());
+        const removed = await bucketManager.delete(this.bucket, storageKey);
+        if (removed.resp.statusCode !== 200 && removed.resp.statusCode !== 612) {
+            throw new QiniuError("Delete Qiniu Storage", "Failed to delete file", {
+                status: removed.resp.statusCode,
+            });
+        }
     }
 }

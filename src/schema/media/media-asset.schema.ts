@@ -38,10 +38,19 @@ export const mediaAssetAddVersionSchema = z.object({
     currentVersionId: z.uuidv7(),
     status: z.enum(MEDIA_FILE_STATUS).default("uploading"),
     storageKey: z.string().trim().min(1, "Asset storage key is required"),
-})
+});
+
+export const mediaAssetUpdateSchema = z.object({
+    title: z.string().trim().min(1, "Asset title is required"),
+    description: z.string().trim().min(1, "Asset description is required").nullable().default(null),
+    status: z.enum(MEDIA_ASSET_STATUS),
+});
 
 export type MediaAssetForm = z.input<typeof mediaAssetSchema>;
 export type MediaAssetDTO = z.output<typeof mediaAssetSchema>;
+
+export type MediaAssetUpdateForm = z.input<typeof mediaAssetUpdateSchema>;
+export type MediaAssetUpdateDTO = z.output<typeof mediaAssetUpdateSchema>;
 
 export type MediaAssetCallbackForm = z.input<typeof mediaAssetCallbackSchema>;
 export type MediaAssetCallbackDTO = z.output<typeof mediaAssetCallbackSchema>;

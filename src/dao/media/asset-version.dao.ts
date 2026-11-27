@@ -18,7 +18,8 @@ export type AssetVersionInput = Pick<
 >;
 
 export type AssetVersionQuery = {
-    readonly assetId: string | null;
+    readonly assetId?: string;
+    readonly fileId?: string;
 }
 
 export class AssetVersionDao {
@@ -59,14 +60,13 @@ export class AssetVersionDao {
 
     /** @description 查询资产的文件版本列表 */
     static async query(data: AssetVersionQuery): Promise<AssetVersionListColumns[]> {
-        try {
-            return await db.orm.public.AssetVersion
-                .where({ assetId: data.assetId })
-                .select(...assetVersionListFields)
-                .all();
-        } catch (error) {
-            throw mapPrismaError(error, "MEDIA");
-        }
+        const filtered = db.orm.public.AssetVersion.where((version, { fns }) => {
+            const conditions = [];
+            if (data.assetId) conditions.push(fns.eq(version.assetId, data.assetId));
+            if (data.fileId) conditions.push(fns.eq(version.fileId, data.fileId));
+            return conditions.length > 0 ? fns.and(...conditions) : version.id.isNotNull();
+        });
+        return filtered.select(...assetVersionListFields).all();
     }
 
     /** @description 根据ID查询文件版本记录 */
