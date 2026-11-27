@@ -846,7 +846,7 @@ export class MediaService {
     /** @description 创建媒体目录 */
     static async createFolder(dto: MediaFolderDTO) {
         const uniqueName = await MediaFolderDao.findByName(dto.name);
-        if (!uniqueName) {
+        if (uniqueName) {
             throw new ConflictError("MEDIA", "Folder Name is already in use");
         }
         await MediaFolderDao.insert(dto);
