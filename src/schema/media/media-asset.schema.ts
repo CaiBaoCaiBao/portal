@@ -46,6 +46,19 @@ export const mediaAssetUpdateSchema = z.object({
     status: z.enum(MEDIA_ASSET_STATUS),
 });
 
+export const mediaAssetQuerySchema = z.object({
+    folderId: z.uuidv7().nullable(),
+    title: z.string().trim().min(1).optional(),
+    status: z.enum(MEDIA_ASSET_STATUS).optional(),
+    kind: z.string().trim().min(1).optional(),
+    createdFrom: z.iso.datetime({ offset: true }).optional(),
+    createdTo: z.iso.datetime({ offset: true }).optional(),
+});
+
+export const mediaAssetOrderSchema = z.object({
+    createdAt: z.iso.datetime({ offset: true }).optional(),
+});
+
 export type MediaAssetForm = z.input<typeof mediaAssetSchema>;
 export type MediaAssetDTO = z.output<typeof mediaAssetSchema>;
 
@@ -57,3 +70,9 @@ export type MediaAssetCallbackDTO = z.output<typeof mediaAssetCallbackSchema>;
 
 export type MediaAssetAddVersionForm = z.input<typeof mediaAssetAddVersionSchema>;
 export type MediaAssetAddVersionDTO = z.output<typeof mediaAssetAddVersionSchema>;
+
+export type MediaAssetQueryForm = z.input<typeof mediaAssetQuerySchema>;
+export type MediaAssetQueryDTO = z.output<typeof mediaAssetQuerySchema>;
+
+export type MediaAssetOrderForm = z.input<typeof mediaAssetOrderSchema>;
+export type MediaAssetOrderDTO = z.output<typeof mediaAssetOrderSchema>;

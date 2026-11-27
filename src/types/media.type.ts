@@ -17,7 +17,7 @@ const variantColumns = columns<MediaVariantOutput>();
 export const mediaFolderListFields = folderColumns("id", "name");
 export const mediaFolderDetailFields = mediaFolderListFields;
 export const mediaAssetListFields = assetColumns(
-    "id", "title", "folderId", "currentVersionId", "createdAt"
+    "id", "title", "folderId", "currentVersionId", "createdAt","kind"
 );
 export const mediaAssetDetailFields = assetColumns(
     "id", "title", "folderId", "createdAt", "currentVersionId",
@@ -55,6 +55,9 @@ export const variantListFields = variantColumns(
 export type MediaFolderListColumns = Row<MediaFolderOutput, typeof mediaFolderListFields>;
 export type MediaFolderDetailColumns = Row<MediaFolderOutput, typeof mediaFolderDetailFields>;
 export type MediaAssetListColumns = Row<MediaAssetOutput, typeof mediaAssetListFields>;
+export type MediaAssetListVO = MediaAssetListColumns & {
+    thumbnailUrl: string | null;
+};
 export type MediaAssetDetailColumns = Row<MediaAssetOutput, typeof mediaAssetDetailFields>;
 export type AssetVersionListColumns = Row<AssetVersionOutput, typeof assetVersionListFields>;
 export type AssetVersionDetailColumns = Row<AssetVersionOutput, typeof assetVersionDetailFields>;

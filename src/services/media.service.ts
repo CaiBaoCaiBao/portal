@@ -26,7 +26,9 @@ import {
     type AddFileDTO,
     type MediaAssetCallbackDTO,
     type MediaAssetDTO,
+    type MediaAssetQueryDTO,
     mediaFolderOrderSchema,
+    mediaAssetOrderSchema,
     AddFilECallbackDTO,
     type AssetVersionDTO,
     MediaVariantDTO,
@@ -44,7 +46,7 @@ import {
     NotFoundError,
     QiniuError,
 } from "@/lib";
-import { type MediaFolderListVO } from "@/types/media.type";
+import { type MediaAssetListVO, type MediaFolderListVO } from "@/types/media.type";
 import qiniu from "qiniu";
 import { db } from "@/prisma/db";
 
@@ -233,6 +235,45 @@ export class MediaService {
         for (const key of keys) {
             await this.deleteQiniuObject(key);
         }
+    }
+
+    /** @description 分页查询媒体资产 */
+    static async queryAsset(
+        query: MediaAssetQueryDTO,
+        page: PaginationDTO = { pageIndex: 0, pageSize: 10 },
+        order: OrderDTO<typeof mediaAssetOrderSchema> = []
+    ): Promise<{
+        list: MediaAssetListVO[],
+        total: number,
+    }> {
+        const { rows, total } = await MediaAssetDao.query({
+            folderId: query.folderId,
+            title: query.title,
+            status: query.status,
+            kind: query.kind,
+            createdFrom: query.createdFrom,
+            createdTo: query.createdTo,
+        }, page, order);
+        const versionIds = rows.flatMap((row) => row.currentVersionId ? [row.currentVersionId] : []);
+        const versions = await AssetVersionDao.findByIds(versionIds);
+        const fileIdByVersionId = new Map(versions.map((version) => [version.id, version.fileId]));
+        const thumbnails = await MediaVariantDao.findByFileIds(
+            [...new Set(versions.map((version) => version.fileId))],
+            "thumbnail",
+        );
+        const urlByFileId = new Map(thumbnails.map((item) => [item.fileId, item.url]));
+        return {
+            list: rows.map((row) => {
+                const fileId = row.currentVersionId
+                    ? fileIdByVersionId.get(row.currentVersionId)
+                    : undefined;
+                return {
+                    ...row,
+                    thumbnailUrl: fileId ? urlByFileId.get(fileId) ?? null : null,
+                };
+            }),
+            total,
+        };
     }
 
     // ========================================================================

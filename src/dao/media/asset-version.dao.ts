@@ -69,6 +69,19 @@ export class AssetVersionDao {
         return filtered.select(...assetVersionListFields).all();
     }
 
+    /** @description 按编号批量查询文件版本 */
+    static async findByIds(ids: string[]): Promise<AssetVersionListColumns[]> {
+        if (ids.length === 0) return [];
+        try {
+            return await db.orm.public.AssetVersion
+                .where((version) => version.id.in(ids))
+                .select(...assetVersionListFields)
+                .all();
+        } catch (error) {
+            throw mapPrismaError(error, "MEDIA");
+        }
+    }
+
     /** @description 根据ID查询文件版本记录 */
     static async findById(id: string): Promise<AssetVersionDetailColumns | null> {
         try {

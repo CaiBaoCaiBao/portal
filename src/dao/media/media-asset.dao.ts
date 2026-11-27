@@ -11,8 +11,8 @@ import { orderByField } from "@prisma/orm-family-sql/orm-client";
 import {
     mediaAssetListFields,
     mediaAssetDetailFields,
-    type MediaAssetListColumns,
     type MediaAssetDetailColumns,
+    type MediaAssetListColumns,
 } from "@/types/media.type";
 
 type MediaAssetInputFields = FieldInputTypes["public"]["MediaAsset"];
@@ -102,7 +102,7 @@ export class MediaAssetDao {
         ));
         try {
             const rows = await filtered
-                .orderBy([(asset) => asset.title.asc(), ...orderRules])
+                .orderBy([...orderRules, (asset) => asset.title.asc()])
                 .limit(page.pageSize)
                 .offset(page.pageIndex * page.pageSize)
                 .select(...mediaAssetListFields)

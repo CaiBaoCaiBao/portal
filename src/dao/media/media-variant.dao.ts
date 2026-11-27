@@ -61,4 +61,23 @@ export class MediaVariantDao {
             throw mapPrismaError(error, "MEDIA");
         }
     }
+
+    /** @description 按文件编号和用途批量查询衍生文件 */
+    static async findByFileIds(
+        fileIds: string[],
+        purpose: string,
+    ): Promise<{ fileId: string, url: string }[]> {
+        if (fileIds.length === 0) return [];
+        try {
+            return await db.orm.public.MediaVariant
+                .where((variant, { fns }) => fns.and(
+                    variant.fileId.in(fileIds),
+                    variant.purpose.eq(purpose),
+                ))
+                .select("fileId", "url")
+                .all();
+        } catch (error) {
+            throw mapPrismaError(error, "MEDIA");
+        }
+    }
 }
