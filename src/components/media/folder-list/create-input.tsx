@@ -31,6 +31,7 @@ export function CreateInput({
         defaultValues: {
             name: "",
         },
+        mode:"onChange",
         resolver: zodResolver(mediaFolderSchema)
     })
 
