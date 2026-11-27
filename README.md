@@ -12,7 +12,7 @@ Portal 是 JuntL 的门户站点，用于内容、个人主页的展示以及对
 
 以下是该项目正在/计划实施的模块和功能：
 
-- 数字资产模块 ![Dev](https://img.shields.io/badge/Dev-316192)
+- 数字资产模块 ![Complete](https://img.shields.io/badge/BackEnd-Complete-green) ![Dev](https://img.shields.io/badge/FrontEnd-Dev-316192)
   - 媒体目录 ![2026-11-22](https://img.shields.io/badge/Complete-2026--11--22-green)
     - [x] 创建
     - [x] 修改

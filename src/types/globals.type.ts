@@ -8,6 +8,8 @@ export type PaginationQuery = {
     pageSize: number;
 }
 
+export type MatchModule = | "exact" | "prefix" | "regex" | "contains" | "suffix";
+
 export type OrderQuery<T> = {
     field: keyof T;
     order: "asc" | "desc";
