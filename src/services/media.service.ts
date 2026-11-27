@@ -207,7 +207,7 @@ export class MediaService {
             if (existing.id === version.fileId) return;
             if (existing.status === "ready") {
                 dto.status = "ready";
-                const added = await this.addAssetVersionTransaction(dto, existing.id);
+                const added = await this.addFileTransaction(dto, existing.id);
                 return {
                     fileId: added.fileId,
                     storageKey: existing.storageKey,
@@ -229,7 +229,7 @@ export class MediaService {
                 if (qiniuStatusCode === 200) {
                     await MediaFileDao.update(existing.id, { status: "ready" });
                     dto.status = "ready";
-                    const added = await this.addAssetVersionTransaction(dto, existing.id);
+                    const added = await this.addFileTransaction(dto, existing.id);
                     return {
                         fileId: added.fileId,
                         storageKey: existing.storageKey,
@@ -262,7 +262,7 @@ export class MediaService {
             }
         }
 
-        const added = await this.addAssetVersionTransaction(dto, null);
+        const added = await this.addFileTransaction(dto, null);
         const uploadToken = this.generateUploadToken(dto.storageKey);
         return {
             fileId: added.fileId,
@@ -272,7 +272,7 @@ export class MediaService {
     }
 
     /** @description 添加媒体文件事务 */
-    private static async addAssetVersionTransaction(
+    private static async addFileTransaction(
         dto: AddFileDTO, existingId: string | null
     ): Promise<{ fileId: string, versionId?: string }> {
         const versions = await AssetVersionDao.query({ assetId: dto.assetId });
@@ -310,7 +310,7 @@ export class MediaService {
     }
 
     /** @description 添加媒体文件回调 */
-    static async addAssetVersionCallback(dto: AddFilECallbackDTO) {
+    static async addFileCallback(dto: AddFilECallbackDTO) {
         const asset = await MediaAssetDao.findById(dto.assetId);
         if (!asset) throw new NotFoundError("MEDIA", "Asset is not found");
         const file = await MediaFileDao.findById(dto.fileId);
@@ -336,6 +336,8 @@ export class MediaService {
             }, tx.orm);
         });
     }
+
+    
 
     // ========================================================================
     // ========================== VERSION SERVICES ============================
