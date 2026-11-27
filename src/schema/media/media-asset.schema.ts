@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { MEDIA_ASSET_STATUS } from "@/constant/media/media-asset.constant";
 import { MEDIA_FILE_STATUS } from "@/constant/media/media-file.constant";
+import { orderQuerySchema, paginationQuerySchema } from "../globals.schema";
 
 export const mediaAssetSchema = z.object({
     title: z.string().trim().min(1, "Asset title is required"),
@@ -60,6 +61,12 @@ export const mediaAssetOrderSchema = z.object({
     createdAt: z.iso.datetime({ offset: true }).optional(),
 });
 
+export const paginationAssetSchema = z.object({
+    query: mediaAssetQuerySchema,
+    page: paginationQuerySchema,
+    order: orderQuerySchema(mediaAssetOrderSchema)
+})
+
 export type MediaAssetForm = z.input<typeof mediaAssetSchema>;
 export type MediaAssetDTO = z.output<typeof mediaAssetSchema>;
 
@@ -77,3 +84,6 @@ export type MediaAssetQueryDTO = z.output<typeof mediaAssetQuerySchema>;
 
 export type MediaAssetOrderForm = z.input<typeof mediaAssetOrderSchema>;
 export type MediaAssetOrderDTO = z.output<typeof mediaAssetOrderSchema>;
+
+export type PaginationAssetForm = z.input<typeof paginationAssetSchema>;
+export type PaginationAssetDTO = z.output<typeof paginationAssetSchema>;
