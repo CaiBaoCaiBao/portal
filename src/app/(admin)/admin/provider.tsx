@@ -8,9 +8,9 @@ import { AdminSidebar } from "./admin-sidebar"
 
 export default function Provider({ children }: { children: React.ReactNode }) {
     return (
-        <SidebarProvider>
+        <SidebarProvider className="h-svh overflow-hidden">
             <AdminSidebar />
-            <SidebarInset>
+            <SidebarInset className="min-h-0 overflow-hidden">
                 <AppHeaderFrame>
                     <AdminHeader />
                     {children}
